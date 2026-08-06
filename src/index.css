@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+}
+
+body {
+  background: #0f1520;
+  color: #e8eef5;
+  overflow: hidden;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3b4b5f;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Base animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(36px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cardPop {
+  from { opacity: 0; transform: scale(0.82) translateY(30px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes congratsPop {
+  from { opacity: 0; transform: scale(0.75) translateY(40px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+@keyframes helixSway {
+  from { transform: translateX(-6px) skewX(-8deg); }
+  to { transform: translateX(6px) skewX(8deg); }
+}
+
+@keyframes seqFloat {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(-18px); opacity: 0.9; }
+}
+
+@keyframes dnaPulse {
+  0%, 100% { transform: scaleY(0.5); opacity: 0.25; }
+  50% { transform: scaleY(1); opacity: 0.9; }
+}
+
+@keyframes cardPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 184, 77, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 184, 77, 0.4); }
+}
+
+/* Utility classes */
+.animate-fade-up {
+  animation: fadeUp 0.5s ease both;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.4s ease both;
+}
+
+.animate-card-pop {
+  animation: cardPop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.animate-overlay-in {
+  animation: overlayIn 0.35s ease both;
+}
+
+.animate-congrats-pop {
+  animation: congratsPop 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.animate-blink {
+  animation: blink 0.8s step-end infinite;
+}
+
+.animate-helix-sway {
+  animation: helixSway 3s ease-in-out infinite alternate;
+}
+
+.animate-seq-float {
+  animation: seqFloat 6s ease-in-out infinite;
+}
+
+.animate-dna-pulse {
+  animation: dnaPulse 1.6s ease-in-out infinite;
+}
+
+.animate-card-pulse {
+  animation: cardPulse 1s ease 3;
+}
+
+.animate-shake {
+  animation: shake 0.4s ease;
+}
+
+/* Q-value slider thumb (Trimming) */
+.q-threshold-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffb84d;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.q-threshold-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffb84d;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}

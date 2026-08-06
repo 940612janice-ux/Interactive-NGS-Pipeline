@@ -250,7 +250,7 @@ function createBCLRawVisualization() {
               <p>每個 cluster 在每個 cycle 的四通道螢光強度值（如：紅: 10, 綠: 950, 黃: 15, 藍: 20）</p>
             </div>
           </div>
-          <div class="pipeline-arrow">⟶</div>
+          <div class="pipeline-arrow">↓</div>
           <div class="pipeline-step" id="pipeline-step-2">
             <div class="step-badge">2</div>
             <div class="step-body">
@@ -258,7 +258,7 @@ function createBCLRawVisualization() {
               <p>比較四通道相對強度，最強者即為判讀結果，輸出對應鹼基（A/T/C/G）</p>
             </div>
           </div>
-          <div class="pipeline-arrow">⟶</div>
+          <div class="pipeline-arrow">↓</div>
           <div class="pipeline-step" id="pipeline-step-3">
             <div class="step-badge">3</div>
             <div class="step-body">
