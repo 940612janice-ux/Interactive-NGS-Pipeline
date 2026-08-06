@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基因偵探事務所 — NGS 變異檢測</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ===== 主頁 1：情境式開頭 ===== -->
+  <section id="view-home" class="view">
+    <div class="dna-helix" aria-hidden="true">
+      <div class="helix" style="--d:0s;left:8%"></div>
+      <div class="helix" style="--d:0s;left:92%"></div>
+      <div class="helix" style="--d:.6s;left:32%"></div>
+    </div>
+    <div class="seq-layer" aria-hidden="true">
+      <span style="--x:6%;--y:18%;--r:-2s">A</span>
+      <span style="--x:18%;--y:64%;--r:-4s">C</span>
+      <span style="--x:30%;--y:30%;--r:-7s">G</span>
+      <span style="--x:44%;--y:78%;--r:-3s">T</span>
+      <span style="--x:58%;--y:22%;--r:-5s">A</span>
+      <span style="--x:70%;--y:70%;--r:-2.5s">G</span>
+      <span style="--x:83%;--y:34%;--r:-6s">C</span>
+      <span style="--x:94%;--y:80%;--r:-4.5s">T</span>
+    </div>
+    <div class="home-grid">
+      <div class="home-left">
+        <div class="office-badge">基因偵探事務所 · 案件登錄</div>
+        <h1>歡迎來到<br><span>基因偵探事務所</span></h1>
+        <p id="scenario-text"></p>
+        <div class="dna-decoration" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="home-right">
+        <h2>請選擇患者檢體</h2>
+        <p class="hint">點選一位患者，開始你的偵查任務</p>
+        <div id="patient-list"></div>
+      </div>
+    </div>
+    <div class="home-footer">
+      <button id="start-btn" type="button" disabled>開始尋找！</button>
+      <p id="start-hint" class="start-hint">請先選擇一位患者</p>
+    </div>
+  </section>
+
+  <!-- ===== 次頁：操作介面 ===== -->
+  <section id="view-app" class="view" hidden>
+    <div id="app-topbar">
+      <div class="topbar-left">
+        <strong>基因偵探事務所</strong>
+        <span id="patient-badge">檢體：未選擇</span>
+      </div>
+      <button id="home-btn" type="button">回首頁</button>
+    </div>
+    <div id="app-body">
+      <aside id="sidebar">
+        <header id="sidebar-header">
+          <h1>NGS Pipeline</h1>
+          <p>全流程工具縮圖</p>
+        </header>
+        <nav id="workflow-list"></nav>
+      </aside>
+
+      <main id="main-panel">
+        <section id="overview">
+          <h2>NGS 體細胞變異檢測流程總覽</h2>
+          <p>點擊左側工具縮圖，或直接在此流程圖中點擊任一步驟，查看詳細說明。</p>
+          <div id="flow-overview"></div>
+        </section>
+        <section id="detail" hidden>
+          <button id="back-btn" type="button">&larr; 返回總覽</button>
+          <div id="detail-content"></div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <!-- ===== 任務卡片（彈窗） ===== -->
+  <div id="task-overlay" hidden>
+    <div id="task-card">
+      <div class="task-slides">
+        <div class="task-slide active" data-index="0" data-stage="0">
+          <div class="task-icon">
+            <img src="blc.png" alt="BCL">
+          </div>
+          <div class="task-step-label">案件目標</div>
+          <h2>第一關：BCL 拆碼與轉檔</h2>
+          <p>「我們的第一個關卡是處理剛下機的 BCL 檔，請幫我們將它拆碼並轉成 FASTQ！」</p>
+        </div>
+        <div class="task-slide" data-index="1" data-stage="0">
+          <div class="task-icon">
+            <img src="blc.png" alt="BCL">
+          </div>
+          <div class="task-step-label">Step 1 · 原始光學訊號</div>
+          <h2>BCL 原始資料</h2>
+          <p>序列儀產生的原始 BCL 檔案，儲存的是四通道螢光強度數值，還沒有鹼基文字。觀察純粹的光學訊號矩陣。</p>
+        </div>
+        <div class="task-slide" data-index="2" data-stage="0">
+          <div class="task-icon">
+            <img src="fastq.png" alt="FASTQ">
+          </div>
+          <div class="task-step-label">Step 2 · Basecalling</div>
+          <h2>bcl2fastq Basecalling</h2>
+          <p>BCL 是序列儀的二進位原始資料，就像 DNA 的「原始密碼本」。bcl2fastq 比較四通道螢光強度，判讀出對應鹼基（A/T/C/G），輸出為 FASTQ。</p>
+        </div>
+        <div class="task-slide" data-index="3" data-stage="0">
+          <div class="task-icon">
+            <img src="fastq.png" alt="FASTQ">
+          </div>
+          <div class="task-step-label">Step 3 · 歸檔</div>
+          <h2>依 Index 序列拆碼歸檔</h2>
+          <p>每位患者都有專屬的 Index 標籤。辨識 Index 條碼，將混合資料拆開，拖拽分類到對應樣品的儲存桶中。</p>
+        </div>
+        <div class="task-slide" data-index="4" data-stage="1">
+          <div class="task-icon">
+            <img src="fastq.png" alt="FASTQ">
+          </div>
+          <div class="task-step-label">案件目標</div>
+          <h2>第二關：前處理 — Pre-processing</h2>
+          <p>「接下來是前處理階段！請幫我們對 Raw FASTQ 進行品質檢測、修剪接頭與低品質鹼基，並將乾淨的 FASTQ 比對到參考基因組。」</p>
+        </div>
+        <div class="task-slide" data-index="5" data-stage="1">
+          <div class="task-icon">
+            <img src="fastq.png" alt="FASTQ">
+          </div>
+          <div class="task-step-label">Step 1 · FastQC 品質檢測</div>
+          <h2>FastQC 品質檢測</h2>
+          <p>FastQC 對 Raw FASTQ 進行品質分析，生成 Per-base 品質折線圖與 Adapter 殘留比例。觀察 Q &lt; 20 的紅色警示區域，點擊「下一步」進入修剪。</p>
+        </div>
+        <div class="task-slide" data-index="6" data-stage="1">
+          <div class="task-icon">
+            <img src="fastq.png" alt="FASTQ">
+          </div>
+          <div class="task-step-label">Step 2 · 修剪與過濾</div>
+          <h2>fastp / Trimmomatic 裁接頭與低品質</h2>
+          <p>使用品質剪刀拖動 Q 值門檻，切除 low-quality 尾部；用 Adapter 刮刀清除接頭序列。觀察 Raw FASTQ → Clean FASTQ 的轉換。</p>
+        </div>
+        <div class="task-slide" data-index="7" data-stage="1">
+          <div class="task-icon">
+            <img src="sam.png" alt="SAM">
+          </div>
+          <div class="task-step-label">Step 3 · 序列比對</div>
+          <h2>BWA-MEM 對齊參考基因體</h2>
+          <p>拖動短序列至 hg38 參考基因組的對應位置，模擬 BWA/Bowtie2 比對過程。觀察 Reads 轉化為帶有基因體座標的結構化比對結果。</p>
+        </div>
+      </div>
+      <div class="task-nav">
+        <button id="task-prev" type="button">上一步</button>
+        <div id="task-dots"></div>
+        <button id="task-next" type="button">下一步</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 恭喜弹窗：前處理序列比對完成 ===== -->
+  <div id="congrats-popup" hidden>
+    <div class="congrats-overlay"></div>
+    <div class="congrats-card">
+      <div class="congrats-icon">🧬</div>
+      <h2 class="congrats-title">恭喜你已經得到完整的完整地體基因序列了 !</h2>
+      <p class="congrats-subtitle">來觀察後續的潛在基因有什麼變化吧 !</p>
+      <button id="congrats-close" type="button">繼續探索</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
