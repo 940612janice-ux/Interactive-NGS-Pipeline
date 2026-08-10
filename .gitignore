@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# editor / os
+.DS_Store
+Thumbs.db
+*.swp
+
+# logs
+*.log
+npm-debug.log*
+
+# temp / junk
+12.0.2
+ngs-pipeline@1.0.0
+vite
