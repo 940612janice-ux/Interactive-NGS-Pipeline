@@ -50,6 +50,11 @@ button {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(36px); }
   to { opacity: 1; transform: translateX(0); }
@@ -104,6 +109,10 @@ button {
 /* Utility classes */
 .animate-fade-up {
   animation: fadeUp 0.5s ease both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease both;
 }
 
 .animate-slide-in {
@@ -166,4 +175,346 @@ button {
   cursor: pointer;
   border: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* GC 過濾滑桿 */
+.gc-threshold-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fb923c;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(251, 146, 60, 0.6);
+}
+
+.gc-threshold-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fb923c;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 6px rgba(251, 146, 60, 0.6);
+}
+
+/* 裁剪位置滑桿（Per Base Sequence Quality） */
+.trim-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f87171;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.6);
+}
+
+.trim-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f87171;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.6);
+}
+
+/* GC 過濾：被過濾區粒子掉落 */
+@keyframes gcParticleFall {
+  0% { transform: translateY(0); opacity: 0.95; }
+  100% { transform: translateY(34px); opacity: 0; }
+}
+
+.gc-particle {
+  animation: gcParticleFall 1.6s ease-in infinite;
+  transform-box: fill-box;
+}
+
+/* GC 過濾：通過區綠色動態光暈 */
+@keyframes gcPassGlow {
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(34, 197, 94, 0.35)); opacity: 0.85; }
+  50% { filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.65)); opacity: 1; }
+}
+
+.gc-pass-glow {
+  animation: gcPassGlow 2.4s ease-in-out infinite;
+}
+
+/* Per Base Sequence Content：開頭遮罩滑桿 */
+.mask-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #2dd4bf;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(45, 212, 191, 0.65);
+}
+
+.mask-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #2dd4bf;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 6px rgba(45, 212, 191, 0.65);
+}
+
+/* 開頭遮罩註記彈出 */
+@keyframes maskAnnotationPop {
+  0% { opacity: 0; transform: translateX(-6px) scale(0.8); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.mask-annotation {
+  animation: maskAnnotationPop 0.35s ease-out both;
+}
+
+/* Per Tile Sequence Quality：過濾門檻滑桿 */
+.tile-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f87171;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.65);
+}
+
+.tile-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f87171;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.65);
+}
+
+/* Tile 品質不達標：紅色警戒外框（由外向內彈出） */
+@keyframes tileWarnFrame {
+  0% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); transform: scale(1.8); }
+  55% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.9); }
+  100% { box-shadow: 0 0 0 1.5px rgba(239, 68, 68, 0.95), inset 0 0 4px rgba(239, 68, 68, 0.55); transform: scale(1); }
+}
+
+.tile-warn {
+  animation: tileWarnFrame 0.55s ease-out both;
+  z-index: 1;
+  position: relative;
+}
+
+/* Overrepresented Sequences：Marked 徽章彈出 */
+@keyframes markPop {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.mark-pop {
+  animation: markPop 0.35s ease-out both;
+}
+
+/* Adapter Content：比對敏感度滑桿 */
+.adapter-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fbbf24;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.65);
+}
+
+.adapter-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fbbf24;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.65);
+}
+
+/* ===== 序列比對 (Alignment) 細捲軸 ===== */
+.ref-bases {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2px;
+  padding: 6px 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3b4b5f transparent;
+}
+
+.ref-bases::-webkit-scrollbar {
+  height: 6px;
+}
+
+.ref-bases::-webkit-scrollbar-thumb {
+  background: #3b4b5f;
+  border-radius: 3px;
+}
+
+.ref-bases::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ===== Contamination Estimation 三欄視覺 ===== */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.animate-spin-reverse {
+  animation: spinReverse 14s linear infinite;
+}
+
+@keyframes dataFlowX {
+  0% { transform: translateX(-12px); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(12px); opacity: 0; }
+}
+
+.data-flow-dot {
+  animation: dataFlowX 1.4s ease-in-out infinite;
+}
+
+@keyframes dataPulseRing {
+  0% { transform: scale(0.5); opacity: 0.75; }
+  100% { transform: scale(2.3); opacity: 0; }
+}
+
+.data-pulse-ring {
+  animation: dataPulseRing 2.4s ease-out infinite;
+}
+
+@keyframes needleGlow {
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(76, 195, 138, 0.45)); }
+  50% { filter: drop-shadow(0 0 12px rgba(76, 195, 138, 0.9)); }
+}
+
+.needle-clean-glow {
+  animation: needleGlow 1.6s ease-in-out infinite;
+}
+
+@keyframes zoneGlow {
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(76, 195, 138, 0.35)); }
+  50% { filter: drop-shadow(0 0 9px rgba(76, 195, 138, 0.7)); }
+}
+
+.zone-clean-glow {
+  animation: zoneGlow 1.6s ease-in-out infinite;
+}
+
+@keyframes terminalScan {
+  0% { transform: translateY(-120%); }
+  100% { transform: translateY(340%); }
+}
+
+.terminal-scan {
+  animation: terminalScan 2.6s linear infinite;
+}
+
+@keyframes floatCursor {
+  0%, 100% { transform: translateY(0) rotate(14deg); }
+  50% { transform: translateY(-7px) rotate(14deg); }
+}
+
+.cursor-float {
+  animation: floatCursor 2.4s ease-in-out infinite;
+}
+
+@keyframes btnGlow {
+  0%, 100% { box-shadow: 0 0 18px rgba(77, 163, 255, 0.55), 0 0 46px rgba(77, 163, 255, 0.28); }
+  50% { box-shadow: 0 0 30px rgba(77, 163, 255, 0.9), 0 0 70px rgba(77, 163, 255, 0.45); }
+}
+
+.btn-calc-glow {
+  animation: btnGlow 2.2s ease-in-out infinite;
+}
+
+/* ===== Read Orientation Bias (OrientationBias) ===== */
+.ob-threshold-slider {
+  accent-color: #ffb84d;
+}
+
+.ob-threshold-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffb84d;
+  cursor: pointer;
+  border: 2px solid #0f1520;
+  box-shadow: 0 0 10px rgba(255, 184, 77, 0.75);
+}
+
+.ob-threshold-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffb84d;
+  cursor: pointer;
+  border: 2px solid #0f1520;
+  box-shadow: 0 0 10px rgba(255, 184, 77, 0.75);
+}
+
+@keyframes obRingPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 184, 77, 0.45), inset 0 0 8px rgba(255, 184, 77, 0.18); }
+  50% { box-shadow: 0 0 20px rgba(255, 184, 77, 0.95), inset 0 0 14px rgba(255, 184, 77, 0.4); }
+}
+
+.ob-ring-pulse {
+  animation: obRingPulse 1.7s ease-in-out infinite;
+}
+
+@keyframes obOxoFlash {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 107, 107, 0.35); }
+  50% { box-shadow: 0 0 16px rgba(255, 107, 107, 0.75); }
+}
+
+.ob-oxo-flash {
+  animation: obOxoFlash 1.5s ease-in-out infinite;
+}
+
+@keyframes obReadPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.ob-read {
+  animation: obReadPulse 2.2s ease-in-out infinite;
+}
+
+/* ===== FilterMutectCalls 三欄視覺 ===== */
+@keyframes dashFlow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -140; }
+}
+
+.data-lane {
+  animation: dashFlow 3s linear infinite;
+}
+
+@keyframes fmcCoreGlow {
+  0%, 100% { box-shadow: 0 0 22px rgba(255, 184, 77, 0.35), inset 0 0 18px rgba(255, 184, 77, 0.08); }
+  50% { box-shadow: 0 0 34px rgba(255, 184, 77, 0.6), inset 0 0 24px rgba(255, 184, 77, 0.16); }
+}
+
+.fmc-core-glow {
+  animation: fmcCoreGlow 2.4s ease-in-out infinite;
 }

@@ -8,8 +8,8 @@ export const WORKFLOW: WorkflowStage[] = [
     zh: '數據下機與拆碼',
     steps: [
       {
-        name: 'BCL 原始資料',
-        en: 'Sequencer Raw BCL',
+        name: '下機資料檢視',
+        en: 'Basecalling → Raw BCL',
         icon: 'blc.png',
         desc: '序列儀完成定序後產生的原始光學訊號資料。每個 cycle 產生四張螢光影像（A/C/G/T 四色通道），經過影像分析與壓縮儲存為 BCL 二進位格式。此階段尚未進行鹼基判讀，只有純粹的光訊號強度矩陣。',
         bullets: ['Illumina 定序儀原始輸出格式', '每 cycle 4 個通道（Red/Green 兩雷射激發）', '儲存螢光強度而非鹼基文字', '二進位壓縮，需經 Basecalling 解碼'],
@@ -18,8 +18,8 @@ export const WORKFLOW: WorkflowStage[] = [
         visualType: 'bcl-raw',
       },
       {
-        name: 'Basecalling (bcl2fastq)',
-        en: 'BCL → FASTQ Basecalling',
+        name: '數據解碼與轉檔',
+        en: 'BCL → FASTQ ',
         icon: 'fastq.png',
         desc: '使用 bcl2fastq 將 BCL 二進位光訊號轉換為標準 FASTQ 格式。軟體分析每個 cluster 在四個通道的螢光強度，判讀出對應鹼基（A/T/C/G），並計算 Phred Quality Score。此過程將類比光訊號數位化為離散的鹼基序列。',
         bullets: ['四通道螢光強度比較 → 判讀鹼基', 'Phred Q-score 品質值計算', '輸出標準 FASTQ 四行格式', '可設定 adapter trimming / quality masking'],
@@ -28,7 +28,7 @@ export const WORKFLOW: WorkflowStage[] = [
         visualType: 'basecalling',
       },
       {
-        name: 'Demultiplexing',
+        name: '樣本數據拆分',
         en: 'Index-based Demultiplexing',
         icon: 'fastq.png',
         desc: '根據樣本專屬的 Index 序列（Barcode），將混合在同一 flow cell 的多個樣本資料拆分歸檔。Basecalling 階段已解碼出 Index 區段（通常在 Read 1 前 6-8 bp），此步驟比對 Index 並將 reads 分配到對應樣本的 FASTQ 檔案。',
@@ -39,12 +39,12 @@ export const WORKFLOW: WorkflowStage[] = [
       },
     ],
   },
-  {
+  {               
     title: 'Pre-processing',
-    zh: '前處理',
+    zh: '前處理 ( FASTQ → Analysis-ready BAM)',
     steps: [
       {
-        name: 'FastQC 品質檢測',
+        name: '數據品質檢測',
         en: 'FASTQ & FastQC',
         icon: 'fastq.png',
         desc: '以 FastQC 產生 raw FASTQ 的品質報告，檢視 per-base 品質分數、GC 含量、adaptor 汙染、duplication 比例等，作為後續處理的依據。',
@@ -55,7 +55,7 @@ export const WORKFLOW: WorkflowStage[] = [
       },
       {
         name: '修剪與過濾',
-        en: 'fastp / Trimmomatic',
+        en: 'FASTQ → Clean FASTQ',
         icon: 'fastq.png',
         desc: '使用 fastp 或 Trimmomatic 裁切 low-quality 鹼基與 adaptor 序列，並過濾過短或品質過差的 reads，得到乾淨的 FASTQ。',
         bullets: ['Adaptor trimming', 'Sliding-window quality trim', '去重複 / poly-G 過濾'],
@@ -64,8 +64,8 @@ export const WORKFLOW: WorkflowStage[] = [
         visualType: 'trimming',
       },
       {
-        name: '序列比對',
-        en: 'Alignment (hg38 / GRCh38)',
+        name: '參考基因組比對',
+        en: 'Clean FASTQ → Raw BAM',
         icon: 'sam.png',
         desc: '以 BWA-MEM 將乾淨的 FASTQ reads 比對到人類參考基因體 hg38 / GRCh38，產生帶有比對位置與 CIGAR 資訊的 SAM，再轉為 BAM。',
         bullets: ['BWA-MEM 對齊參考基因體', 'SAMtools 排序 (coordinate sort)', '可另加 Read Group 標籤'],
@@ -97,7 +97,7 @@ export const WORKFLOW: WorkflowStage[] = [
   },
   {
     title: 'Variant Calling',
-    zh: '變異檢測 (Somatic Mutect2)',
+    zh: '變異檢測 ( Analysis-ready BAM → PASS VCF)',
     steps: [
       {
         name: 'Mutect2 原始呼叫',
@@ -109,32 +109,6 @@ export const WORKFLOW: WorkflowStage[] = [
         output: 'Raw VCF',
         visualType: 'mutect2',
       },
-      {
-        name: 'Germline Filtering',
-        en: 'gnomAD 擋天生遺傳變異',
-        icon: 'vcf_variant.png',
-        desc: '結合 gnomAD 族群頻率資料，過濾掉人群中常見的天生遺傳變異（germline variants），保留真正的體細胞突變。',
-        bullets: ['使用 gnomAD 族群 allele frequency', '設定 population VCFs 於 Mutect2', '擋掉常見 polymorphism'],
-        input: 'Raw VCF',
-        output: 'Germline-filtered VCF',
-        visualType: 'gnomad',
-      },
-      {
-        name: 'Panel of Normals',
-        en: 'PoN 擋平台技術雜訊',
-        icon: 'vcf_variant.png',
-        desc: '結合 Panel of Normals（由大量正常樣本建立的背景變異）消除平台與實驗技術造成的系統性雜訊，降低假陽性。',
-        bullets: ['以正常樣本建立 PoN', '去除 sequencing 技術誤差', '提高變異偵測專一性'],
-        input: 'Raw VCF + PoN',
-        output: 'Raw VCF (過濾後)',
-        visualType: 'pon',
-      },
-    ],
-  },
-  {
-    title: 'Filtering',
-    zh: '過濾',
-    steps: [
       {
         name: 'Contamination Estimation',
         en: '計算交叉污染率',

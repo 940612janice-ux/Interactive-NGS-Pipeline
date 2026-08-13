@@ -1,263 +1,365 @@
-import React, { useEffect, useRef } from 'react';
-import { BASE_COLORS, hexToRgb, generateRandomSequence, generateQualityScores } from '../../hooks/useUtils';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BASE_COLORS, BaseKey, generateRandomSequence } from '../../hooks/useUtils';
 
 interface BasecallingVisualizationProps {
   onComplete?: () => void;
 }
 
+// BCL 位元編碼規則（與 Illumina BCL 格式一致）：
+//   1 Byte = [前 6 bits：Phred Q-score] + [後 2 bits：鹼基代碼]
+//   鹼基代碼：A = 00 | C = 01 | G = 10 | T = 11
+const BASE_CODE: Record<BaseKey, number> = { A: 0, C: 1, G: 2, T: 3 };
+
+const NUM_CLUSTERS = 4; // 模擬 4 個 cluster（螢光點）
+const NUM_CYCLES = 18;  // 每條 read 讀 18 個 cycle（鹼基）
+
+// FASTQ 第一行（模擬 Illumina 標頭格式）
+const FASTQ_HEADER = '@SIMULATED_RUN:1:1101:1000:1000 1:N:0:0';
+
 export const BasecallingVisualization: React.FC<BasecallingVisualizationProps> = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isPlayingRef = useRef(true);
+  // 每個 cluster 預先產生一條「隱藏的 DNA 序列」與對應品質分數
+  const sequences = useMemo(
+    () =>
+      Array.from({ length: NUM_CLUSTERS }, () => generateRandomSequence(NUM_CYCLES).split('') as BaseKey[]),
+    [],
+  );
+  const qualities = useMemo(
+    () =>
+      Array.from({ length: NUM_CLUSTERS }, () =>
+        Array.from({ length: NUM_CYCLES }, () => 28 + Math.floor(Math.random() * 13)),
+      ),
+    [],
+  );
 
+  // 目前模擬選取的 cluster 與 cycle
+  const [clusterIdx, setClusterIdx] = useState(0);
+  const [cycleIdx, setCycleIdx] = useState(0);
+  const [playing, setPlaying] = useState(true);
+
+  // 自動播放：每隔一段時間自動前進一個 cycle，模擬定序儀依序讀鹼基
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!playing) return;
+    const id = setInterval(() => setCycleIdx((c) => (c + 1) % NUM_CYCLES), 1500);
+    return () => clearInterval(id);
+  }, [playing]);
 
-    const channels = [
-      { base: 'A', label: 'Ch1: Red (A/T)', color: BASE_COLORS.A },
-      { base: 'C', label: 'Ch2: Green (C/G)', color: BASE_COLORS.C },
-      { base: 'G', label: 'Ch3: Yellow', color: BASE_COLORS.G },
-      { base: 'T', label: 'Ch4: Blue (Ref)', color: BASE_COLORS.T },
-    ];
+  // 切換 cluster 時，重新從 Cycle 1 開始解碼
+  const selectCluster = (i: number) => {
+    setClusterIdx(i);
+    setCycleIdx(0);
+    setPlaying(true);
+  };
 
-    const totalCycles = 6;
-    const tilesPerCycle = 10;
+  // ---- 目前正在解碼的 1 Byte ----
+  const base = sequences[clusterIdx][cycleIdx]; // 判讀鹼基（後 2 bits）
+  const qscore = qualities[clusterIdx][cycleIdx]; // Phred Q-score（前 6 bits）
+  const byte = (qscore << 2) | BASE_CODE[base]; // 組回 1 Byte
+  const hexStr = `0x${byte.toString(16).toUpperCase().padStart(2, '0')}`; // 十六進位表示
+  const binStr = byte.toString(2).padStart(8, '0'); // 二進位 8 bits
+  const qBits = binStr.slice(0, 6); // 前 6 bits（Q-score 區）
+  const baseBits = binStr.slice(6); // 後 2 bits（Base 區）
+  const asciiCode = qscore + 33; // Phred + 33 = ASCII 編碼
+  const asciiChar = String.fromCharCode(asciiCode); // 對應的品質字元
 
-    const cycleData: Array<{ base: string; intensities: Record<string, number>; qscore: number }[]> = [];
-    for (let c = 0; c < totalCycles; c++) {
-      const clusters = [];
-      const numClusters = 4 + Math.floor(Math.random() * 3);
-      for (let i = 0; i < numClusters; i++) {
-        const base = ['A', 'C', 'G', 'T'][Math.floor(Math.random() * 4)];
-        const intensities = { A: 0.05, C: 0.05, G: 0.05, T: 0.05 };
-        intensities[base as keyof typeof intensities] = 0.6 + Math.random() * 0.4;
-        const secondHighest = Math.max(...Object.values(intensities).filter(v => v !== intensities[base as keyof typeof intensities]));
-        clusters.push({ base, intensities, qscore: Math.round(-10 * Math.log10(secondHighest / intensities[base as keyof typeof intensities])) });
+  // 已解碼前段（供 FASTQ 終端機顯示）
+  const decodedSeq = sequences[clusterIdx].slice(0, cycleIdx + 1);
+  const decodedQual = qualities[clusterIdx].slice(0, cycleIdx + 1).map((q) => String.fromCharCode(q + 33));
+  const pending = NUM_CYCLES - (cycleIdx + 1); // 尚未解碼的長度
+
+  // 8 個 bit 拆成方格（前 6 個 = Q-Score 區、後 2 個 = Base 區）
+  const bitBoxes = binStr.split('').map((b, i) => (
+    <span
+      key={i}
+      className="w-5 h-7 flex items-center justify-center font-mono text-[13px] font-bold rounded"
+      style={
+        i < 6
+          ? { backgroundColor: 'rgba(77,163,255,0.18)', color: '#4da3ff', border: '1px solid rgba(77,163,255,0.4)', marginRight: i === 5 ? 6 : 0 }
+          : { backgroundColor: BASE_COLORS[base], color: '#080c14', boxShadow: `0 0 8px ${BASE_COLORS[base]}` }
       }
-      cycleData.push(clusters);
-    }
+    >
+      {b}
+    </span>
+  ));
 
-    const decodingAnimation = containerRef.current.querySelector('#decoding-animation');
-    if (!decodingAnimation) return;
-
-    decodingAnimation.innerHTML = `
-      <div class="decoding-stages flex gap-3 flex-1 min-h-0">
-        <div class="decoding-stage flex-1 flex flex-col gap-2 p-2.5 overflow-hidden" style="background:#080c14;border:1px solid #1e2a38;border-radius:8px;">
-          <div class="stage-title text-center pb-1.5 border-b text-[11px] font-bold" style="color:#4da3ff;border-color:#1e2a38;">輸入：四通道光強度矩陣</div>
-          <div class="optical-matrix flex-1 flex flex-col gap-1.5 overflow-hidden" id="optical-matrix"></div>
-          <p class="stage-desc text-center text-[10px] mt-auto" style="color:#9fb0c3;">每個 cluster 一組 4 值 (R,G,Y,B)</p>
-        </div>
-        <div class="decoding-arrow flex items-center justify-center text-[18px] font-bold flex-shrink-0 px-1" style="color:#ffb84d;">⟶</div>
-        <div class="decoding-stage flex-1 flex flex-col gap-2 p-2.5 overflow-hidden" style="background:#080c14;border:1px solid #1e2a38;border-radius:8px;">
-          <div class="stage-title text-center pb-1.5 border-b text-[11px] font-bold" style="color:#4da3ff;border-color:#1e2a38;">演算法：比較四通道相對強度</div>
-          <div class="algorithm-viz flex-1 flex flex-col gap-1.5 overflow-auto p-1" id="algorithm-viz"></div>
-        </div>
-        <div class="decoding-arrow flex items-center justify-center text-[18px] font-bold flex-shrink-0 px-1" style="color:#ffb84d;">⟶</div>
-        <div class="decoding-stage flex-1 flex flex-col gap-2 p-2.5 overflow-hidden" style="background:#080c14;border:1px solid #1e2a38;border-radius:8px;">
-          <div class="stage-title text-center pb-1.5 border-b text-[11px] font-bold" style="color:#4da3ff;border-color:#1e2a38;">輸出：FASTQ 四行格式</div>
-          <div class="fastq-output flex-1 overflow-auto p-2 font-mono text-[9px] leading-[1.4] whitespace-pre-wrap break-all" style="background:#080c14;border:1px solid #1e2a38;border-radius:6px;" id="fastq-output"></div>
-        </div>
-      </div>
-    `;
-
-    const opticalMatrix = decodingAnimation.querySelector('#optical-matrix');
-    const algorithmViz = decodingAnimation.querySelector('#algorithm-viz');
-    const fastqOutput = decodingAnimation.querySelector('#fastq-output');
-
-    channels.forEach((ch) => {
-      const channelEl = document.createElement('div');
-      channelEl.className = 'matrix-channel flex-1 flex flex-col overflow-hidden';
-      channelEl.style.cssText = 'background:#080c14;border:1px solid #1e2a38;border-radius:6px;';
-      channelEl.innerHTML = `
-        <div class="channel-header flex items-center justify-between px-2 py-1 border-b text-[10px] font-bold" style="background:#0f1520;border-color:#1e2a38;">
-          <div class="channel-base flex items-center gap-1">
-            <span class="base-dot w-2 h-2 rounded-full" style="background:${ch.color};box-shadow:0 0 6px ${ch.color}"></span>
-            <span class="channel-label font-mono tracking-wide">${ch.label}</span>
-          </div>
-        </div>
-        <div class="matrix-grid flex-1 grid gap-0.5 p-1" style="grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(6,1fr);" id="grid-${ch.base}"></div>
-      `;
-      opticalMatrix?.appendChild(channelEl);
-
-      const grid = channelEl.querySelector(`#grid-${ch.base}`);
-      if (!grid) return;
-
-      for (let cycle = 0; cycle < totalCycles; cycle++) {
-        for (let tile = 0; tile < tilesPerCycle; tile++) {
-          const cell = document.createElement('div');
-          cell.className = 'matrix-cell rounded';
-          cell.style.transition = 'all 0.3s ease';
-          cell.style.position = 'relative';
-          const intensity = Math.random() * 0.3;
-          const [r, g, b] = hexToRgb(ch.color);
-          cell.style.background = `rgba(${r},${g},${b},${0.1 + intensity})`;
-          cell.dataset.base = '';
-          cell.dataset.intensity = intensity.toFixed(2);
-          cell.dataset.cycle = cycle.toString();
-          cell.dataset.tile = tile.toString();
-          cell.dataset.channel = ch.base;
-          grid.appendChild(cell);
+  // FASTQ 終端機：鹼基行（綠字、目前解碼的鹼基高亮）
+  const seqSpans = decodedSeq.map((b, i) => {
+    const isCurrent = i === cycleIdx;
+    return (
+      <span
+        key={i}
+        style={
+          isCurrent
+            ? { backgroundColor: '#4cc38a', color: '#080c14', fontWeight: 800, borderRadius: 4, padding: '0 4px', boxShadow: '0 0 10px rgba(76,195,138,0.6)' }
+            : { color: '#4cc38a' }
         }
-      }
-    });
+      >
+        {b}
+      </span>
+    );
+  });
 
-    const renderFASTQForCycle = (cycleIdx: number) => {
-      const clusters = cycleData[cycleIdx];
-      let fastq = '';
-      clusters.forEach((d, i) => {
-        const seq = d.base + generateRandomSequence(20);
-        const qual = generateQualityScores(seq.length);
-        fastq += `@CLUSTER_${cycleIdx + 1}_${i + 1} cycle=${cycleIdx + 1}\n`;
-        fastq += seq + '\n';
-        fastq += '+\n';
-        fastq += qual + '\n';
-      });
-      return fastq;
-    };
+  // FASTQ 終端機：品質行（黃字、目前轉換的 ASCII 字元高亮）
+  const qualSpans = decodedQual.map((ch, i) => {
+    const isCurrent = i === cycleIdx;
+    return (
+      <span
+        key={i}
+        style={
+          isCurrent
+            ? { backgroundColor: '#ffb84d', color: '#080c14', fontWeight: 800, borderRadius: 4, padding: '0 4px', boxShadow: '0 0 10px rgba(255,184,77,0.6)' }
+            : { color: '#ffb84d' }
+        }
+      >
+        {ch}
+      </span>
+    );
+  });
 
-    const renderFASTQDisplay = (fastq: string) => {
-      if (!fastqOutput) return;
-      const lines = fastq.split('\n');
-      let html = '';
-      lines.forEach((line, idx) => {
-        const mod = idx % 4;
-        let cls = 'fastq-line';
-        let formatted = line;
-        if (mod === 0) cls += ' fastq-header';
-        else if (mod === 1) {
-          cls += ' fastq-seq';
-          formatted = line.split('').map(b => {
-            const baseClass = ['A', 'C', 'G', 'T'].includes(b) ? `fastq-base ${b}` : 'fastq-base';
-            return `<span class="${baseClass}">${b}</span>`;
-          }).join('');
-        } else if (mod === 2) cls += ' fastq-sep';
-        else cls += ' fastq-qual';
-        html += `<div class="${cls}">${formatted}</div>`;
-      });
-      fastqOutput.innerHTML = html;
-    };
+  // 尚未解碼的位置以淡色「·」佔位
+  const pendingDots = Array.from({ length: pending }, (_, i) => (
+    <span key={`p${i}`} style={{ color: '#33445a' }}>
+      ·
+    </span>
+  ));
 
-    const renderAlgorithmViz = (data: typeof cycleData[0]) => {
-      if (!algorithmViz) return;
-      algorithmViz.innerHTML = data.map((d, i) => {
-        const maxBase = d.base;
-        return `
-          <div class="cluster-comparison flex items-center gap-2 p-1.5 rounded text-[10px]" style="background:#0f1520;border-radius:4px;">
-            <span class="cluster-id font-mono min-w-[50px] text-[9px]" style="color:#9fb0c3;">Cluster ${i + 1}</span>
-            <div class="bars flex gap-1 flex-1 items-end h-8">
-              ${Object.entries(d.intensities).map(([b, v]) => `
-                <div class="bar-wrapper flex flex-col items-center h-full justify-end">
-                  <div class="bar w-full max-w-[20px] rounded-t transition-all" style="height:${v * 100}%;background:${BASE_COLORS[b as keyof typeof BASE_COLORS]};${b === maxBase ? 'box-shadow:0 0 8px ' + BASE_COLORS[b as keyof typeof BASE_COLORS] : ''};min-height:2px;border-radius:2px 2px 0 0;"></div>
-                  <span class="bar-label text-[8px] font-bold mt-0.5 font-mono" style="color:${BASE_COLORS[b as keyof typeof BASE_COLORS]}">${b}</span>
-                </div>
-              `).join('')}
-            </div>
-            <span class="called-base px-2 py-0.5 rounded text-[12px] font-extrabold font-mono min-w-[24px] text-center" style="background:${BASE_COLORS[maxBase as keyof typeof BASE_COLORS]};color:#080c14;">${maxBase}</span>
-          </div>
-        `;
-      }).join('');
-    };
-
-    const decodeCycle = (cycle: number) => {
-      if (cycle >= totalCycles || !isPlayingRef.current) return;
-
-      const grids = opticalMatrix?.querySelectorAll('.matrix-grid');
-      const channelColors = [BASE_COLORS.A, BASE_COLORS.C, BASE_COLORS.G, BASE_COLORS.T];
-
-      grids?.forEach((grid, chIdx) => {
-        const cells = grid.querySelectorAll('.matrix-cell');
-        const channel = ['A', 'C', 'G', 'T'][chIdx];
-        const channelColor = channelColors[chIdx];
-
-        cells.forEach((cell) => {
-          const el = cell as HTMLElement;
-          const cellCycle = parseInt(el.dataset.cycle || '0');
-          if (cellCycle === cycle) {
-            const baseIntensity = 0.5 + Math.random() * 0.5;
-            const [r, g, b] = hexToRgb(channelColor);
-            el.style.background = `rgba(${r},${g},${b},${baseIntensity})`;
-            el.style.transform = 'scale(1.15)';
-
-            setTimeout(() => {
-              el.style.transform = 'scale(1)';
-              el.classList.add('decoded');
-              el.dataset.base = channel;
-            }, 150);
-          }
-        });
-      });
-
-      renderAlgorithmViz(cycleData[cycle]);
-
-      setTimeout(() => {
-        const fastq = renderFASTQForCycle(cycle);
-        renderFASTQDisplay(fastq);
-      }, 600);
-
-      setTimeout(() => decodeCycle(cycle + 1), 1200);
-    };
-
-    decodeCycle(0);
-
-    return () => { isPlayingRef.current = false; };
-  }, []);
+  // 卡片 3：FASTQ 4 行欄位對照表
+  const fastqLines = [
+    { n: 'L1', name: 'Header', color: '#9fb0c3', desc: '機台 / 樣本 / 讀段資訊（固定）' },
+    { n: 'L2', name: 'Sequence', color: '#4cc38a', desc: `寫入鹼基「${base}」→ 第 ${cycleIdx + 1} 位` },
+    { n: 'L3', name: 'Option', color: '#9fb0c3', desc: '「+」分隔行' },
+    { n: 'L4', name: 'Quality', color: '#ffb84d', desc: `寫入字元「${asciiChar}」→ 第 ${cycleIdx + 1} 位` },
+  ];
 
   return (
-    <div className="basecalling-visual grid gap-6 h-[calc(100vh-13rem)] min-h-[600px]" style={{ gridTemplateColumns: '1fr 1fr' }}>
-      {/* Signal Panel */}
-      <div className="signal-panel flex flex-col overflow-hidden rounded-2xl border p-5" style={{ backgroundColor: '#2c3a4b', borderColor: '#3b4b5f' }}>
-        <div className="signal-header flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: '#3b4b5f' }}>
-          <h3 className="text-[16px] font-bold" style={{ color: '#4da3ff' }}>光訊號解碼過程</h3>
-          <span className="signal-badge text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full" style={{ color: '#9fb0c3', backgroundColor: '#0f1520', borderColor: '#3b4b5f', borderWidth: '1px' }}>
-            Putting It All Together
-          </span>
-        </div>
-        <div className="signal-content flex-1 overflow-hidden flex flex-col gap-3">
-          <div className="decoding-animation flex-1 flex flex-col overflow-hidden" id="decoding-animation" ref={containerRef} />
+    <div className="basecalling-visual flex flex-col gap-4 h-[calc(100vh-13rem)] min-h-[640px] min-w-0">
+      {/* ===== 1. 頂部狀態標題列 ===== */}
+      <div className="shrink-0 rounded-2xl border px-5 py-3.5" style={{ backgroundColor: '#2c3a4b', borderColor: '#3b4b5f' }}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* 標題 */}
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full animate-blink" style={{ background: '#4cc38a', boxShadow: '0 0 8px #4cc38a' }} />
+            <h3 className="text-[17px] font-bold tracking-wide" style={{ color: '#4da3ff' }}>
+              光訊號解碼實況 <span style={{ color: '#ffb84d' }}>(BCL ➔ FASTQ Conversion)</span>
+            </h3>
+          </div>
+
+          {/* 模擬切換器：Cluster 選取 + Cycle 控制 */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Cluster 切換器 */}
+            <div className="flex items-center gap-1.5 rounded-full p-1" style={{ backgroundColor: '#0f1520', border: '1px solid #1e2a38' }}>
+              <span className="px-2 text-[11px] font-bold" style={{ color: '#9fb0c3' }}>Cluster</span>
+              {sequences.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => selectCluster(i)}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-bold font-mono transition-colors"
+                  style={i === clusterIdx ? { backgroundColor: '#4da3ff', color: '#080c14' } : { color: '#9fb0c3' }}
+                >
+                  #{i + 1}
+                </button>
+              ))}
+            </div>
+            {/* Cycle 控制 */}
+            <div className="flex items-center gap-1.5 rounded-full p-1" style={{ backgroundColor: '#0f1520', border: '1px solid #1e2a38' }}>
+              <button
+                onClick={() => setCycleIdx((c) => (c - 1 + NUM_CYCLES) % NUM_CYCLES)}
+                className="w-6 h-6 rounded-full text-[12px] font-bold transition-colors"
+                style={{ color: '#ffb84d' }}
+                aria-label="上一個 cycle"
+              >
+                ◀
+              </button>
+              <span className="px-1.5 text-[11px] font-bold font-mono" style={{ color: '#ffb84d' }}>
+                Cycle {cycleIdx + 1} / {NUM_CYCLES}
+              </span>
+              <button
+                onClick={() => setCycleIdx((c) => (c + 1) % NUM_CYCLES)}
+                className="w-6 h-6 rounded-full text-[12px] font-bold transition-colors"
+                style={{ color: '#ffb84d' }}
+                aria-label="下一個 cycle"
+              >
+                ▶
+              </button>
+              <button
+                onClick={() => setPlaying((v) => !v)}
+                className="px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors"
+                style={{ color: '#080c14', backgroundColor: playing ? '#4cc38a' : '#ffb84d' }}
+              >
+                {playing ? '❚❚' : '▶'}
+              </button>
+            </div>
+            <span className="text-[11px] font-mono font-bold" style={{ color: '#9fb0c3' }}>
+              目前模擬 Cluster #{clusterIdx + 1}, Cycle {cycleIdx + 1}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Info Panel */}
-      <div className="info-panel flex flex-col overflow-hidden rounded-2xl border p-5" style={{ backgroundColor: '#2c3a4b', borderColor: '#3b4b5f' }}>
-        <div className="info-header mb-4 pb-3 border-b" style={{ borderColor: '#3b4b5f' }}>
-          <h3 className="text-[16px] font-bold" style={{ color: '#ffb84d' }}>BCL → Raw FASTQ 轉換流程</h3>
-        </div>
-        <div className="info-content flex-1 overflow-auto flex flex-col gap-4">
-          <div className="conversion-pipeline flex flex-col gap-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="pipeline-step flex items-start gap-2.5 p-3 rounded-lg transition-all" style={{ backgroundColor: '#16202c', borderColor: '#2e4154', borderWidth: '1px' }}>
-                <div className="step-badge flex items-center justify-center w-6 h-6 min-w-6 rounded-full text-[11px] font-extrabold text-[#080c14]" style={{ backgroundColor: '#4da3ff' }}>{i}</div>
-                <div className="step-body flex-1">
-                  <strong className="block text-[12px] mb-0.5" style={{ color: '#e8eef5' }}>
-                    {i === 1 ? '讀取 BCL 二進位檔' : i === 2 ? '背景扣除與去噪' : i === 3 ? '四通道比對 → 判讀鹼基' : '計算 Q-score & 輸出 FASTQ'}
-                  </strong>
-                  <p className="text-[11px] leading-[1.5]" style={{ color: '#c6d3e3' }}>
-                    {i === 1 ? '解壓縮 Run-length encoded 光學訊號，還原每個 cluster 的四通道強度矩陣' : i === 2 ? '去除光学背景雜訊、鄰近 cluster 串擾，強化信號' : i === 3 ? '比較 R/G/Y/B 四通道強度，最強者即為判讀結果' : '最強 vs 次強通道差異 → Phred 品質分數，輸出四行 FASTQ'}
-                  </p>
-                </div>
-              </div>
-            ))}
+      {/* ===== 2. 三階段數據轉換卡片（BCL → 解碼 → FASTQ 欄位） ===== */}
+      <div className="shrink-0 grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] grid-cols-1">
+        {/* 卡片 1：原始 BCL 位元 */}
+        <div className="rounded-2xl border p-4 flex flex-col gap-3" style={{ backgroundColor: '#16202c', borderColor: '#2e4154' }}>
+          <div className="text-[12px] font-bold tracking-wide" style={{ color: '#4da3ff' }}>
+            1. 原始 BCL 位元 <span className="opacity-70">(Binary 1-Byte)</span>
           </div>
-          <div className="live-conversion p-3.5 rounded-lg" style={{ backgroundColor: '#0f1520', borderColor: '#1e2a38', borderWidth: '1px' }}>
-            <h4 className="text-[12px] font-bold mb-2.5" style={{ color: '#4da3ff' }}>即時轉換預覽</h4>
-            <div className="conversion-demo flex items-center justify-center gap-3 mb-2.5">
-              <div className="file-box px-3.5 py-2">
-                <div className="file-icon text-2xl">📦</div>
-                <div className="file-label font-medium">BCL</div>
-                <div className="file-ext text-[11px] font-mono" style={{ color: '#9fb0c3' }}>.bcl (二進位)</div>
-              </div>
-              <span className="arrow-symbol text-[18px] font-bold" style={{ color: '#ffb84d' }}>⟶</span>
-              <div className="file-box px-3.5 py-2">
-                <div className="file-icon text-2xl">📄</div>
-                <div className="file-label font-medium">Raw FASTQ</div>
-                <div className="file-ext text-[11px] font-mono" style={{ color: '#9fb0c3' }}>.fastq.gz</div>
-              </div>
+          {/* 十六進位 + 二進位 */}
+          <div className="rounded-lg py-2 text-center" style={{ backgroundColor: '#0f1520', border: '1px solid #1e2a38' }}>
+            <div className="text-[10px] mb-0.5" style={{ color: '#9fb0c3' }}>從 BCL 檔案讀出 1 Byte</div>
+            <div className="font-mono text-[26px] font-extrabold leading-none" style={{ color: '#ffb84d' }}>{hexStr}</div>
+          </div>
+          {/* 8 bits 視覺化：前 6 bits Q 區 + 後 2 bits Base 區 */}
+          <div className="flex items-center justify-center gap-0.5">{bitBoxes}</div>
+          {/* 圖例 */}
+          <div className="flex flex-col gap-1 text-[10px]" style={{ color: '#9fb0c3' }}>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ background: '#4da3ff' }} />
+              <span>前 6 bits：Q-Score 區 (bit 7~2)</span>
             </div>
-            <div className="conversion-log font-mono text-[10px] leading-[1.8] max-h-[120px] overflow-auto" style={{ color: '#9fb0c3' }}>
-              <div className="log-line animate-fadeIn">📦 讀取 BCL 檔案... 解壓縮中</div>
-              <div className="log-line animate-fadeIn" style={{ animationDelay: '1.5s' }}>🔧 背景扣除... 去噪處理中</div>
-              <div className="log-line animate-fadeIn" style={{ animationDelay: '3s' }}>🔬 四通道比對中...</div>
-              <div className="log-line animate-fadeIn" style={{ animationDelay: '4.5s' }}>✅ 判讀完成 → 輸出 FASTQ</div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ background: BASE_COLORS[base] }} />
+              <span>後 2 bits：Base 區 (bit 1~0)</span>
             </div>
+          </div>
+        </div>
+
+        {/* 箭頭（桌面 ➔ / 手機 ↓） */}
+        <div className="flex items-center justify-center text-[24px] font-bold" style={{ color: '#ffb84d' }}>
+          <span className="md:hidden">↓</span>
+          <span className="hidden md:inline">➔</span>
+        </div>
+
+        {/* 卡片 2：解碼與 Quality 轉換 */}
+        <div className="rounded-2xl border p-4 flex flex-col gap-3" style={{ backgroundColor: '#16202c', borderColor: '#2e4154' }}>
+          <div className="text-[12px] font-bold tracking-wide" style={{ color: '#4da3ff' }}>
+            2. 解碼與 Quality 轉換 <span className="opacity-70">(Decoding)</span>
+          </div>
+          {/* 判讀鹼基 */}
+          <div className="flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: '#0f1520', border: '1px solid #1e2a38' }}>
+            <span className="text-[11px]" style={{ color: '#9fb0c3' }}>判讀鹼基</span>
+            <div className="flex items-center gap-2">
+              <span
+                className="px-2.5 py-0.5 rounded-md text-[20px] font-extrabold font-mono leading-none"
+                style={{ backgroundColor: BASE_COLORS[base], color: '#080c14', boxShadow: `0 0 10px ${BASE_COLORS[base]}` }}
+              >
+                {base}
+              </span>
+              <span className="text-[10px] font-mono" style={{ color: '#9fb0c3' }}>對應 bit 「{baseBits}」</span>
+            </div>
+          </div>
+          {/* 品質分數 */}
+          <div className="flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: '#0f1520', border: '1px solid #1e2a38' }}>
+            <span className="text-[11px]" style={{ color: '#9fb0c3' }}>品質分數 Q-score</span>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-md text-[16px] font-extrabold font-mono leading-none" style={{ backgroundColor: '#4da3ff', color: '#080c14' }}>
+                Q{qscore}
+              </span>
+              <span className="text-[10px] font-mono" style={{ color: '#9fb0c3' }}>對應 bit 「{qBits}」</span>
+            </div>
+          </div>
+          {/* ASCII 轉換 */}
+          <div className="rounded-lg py-2 text-center" style={{ backgroundColor: '#0f1520', border: '1px solid #1e2a38' }}>
+            <div className="text-[10px] mb-1" style={{ color: '#9fb0c3' }}>Phred + 33 → ASCII 品質字元</div>
+            <div className="font-mono text-[15px] font-bold" style={{ color: '#4cc38a' }}>
+              Q{qscore} + 33 = {asciiCode} &nbsp;(ASCII 字元 :{' '}
+              <span
+                className="inline-flex w-7 h-7 items-center justify-center rounded align-middle"
+                style={{ backgroundColor: 'rgba(76,195,138,0.2)', border: '1px solid #4cc38a', color: '#4cc38a' }}
+              >
+                {asciiChar}
+              </span>
+              )
+            </div>
+          </div>
+        </div>
+
+        {/* 箭頭（桌面 ➔ / 手機 ↓） */}
+        <div className="flex items-center justify-center text-[24px] font-bold" style={{ color: '#ffb84d' }}>
+          <span className="md:hidden">↓</span>
+          <span className="hidden md:inline">➔</span>
+        </div>
+
+        {/* 卡片 3：封裝至 FASTQ 欄位對照 */}
+        <div className="rounded-2xl border p-4 flex flex-col gap-2" style={{ backgroundColor: '#16202c', borderColor: '#2e4154' }}>
+          <div className="text-[12px] font-bold tracking-wide mb-1" style={{ color: '#4da3ff' }}>
+            3. 封裝至 FASTQ <span className="opacity-70">(FASTQ Line Mapping)</span>
+          </div>
+          {fastqLines.map((line) => (
+            <div
+              key={line.n}
+              className="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
+              style={{ backgroundColor: '#0f1520', border: '1px solid #1e2a38' }}
+            >
+              <span className="w-6 shrink-0 text-[9px] font-bold text-center font-mono" style={{ color: '#5b6b80' }}>{line.n}</span>
+              <span className="text-[10px] font-bold shrink-0" style={{ color: line.color }}>{line.name}</span>
+              <span className="text-[9px] font-mono truncate flex-1 text-right" style={{ color: '#9fb0c3' }}>{line.desc}</span>
+            </div>
+          ))}
+          <div className="text-[9px] leading-[1.6] mt-0.5" style={{ color: '#7d8ea3' }}>
+            提示：鹼基寫入第 2 行、品質字元寫入第 4 行，且兩者位數永遠對齊。
+          </div>
+        </div>
+      </div>
+
+      {/* 管道與終端機之間的連接指示 */}
+      <div className="shrink-0 flex items-center justify-center gap-2 text-[11px] font-mono" style={{ color: '#9fb0c3' }}>
+        <span className="text-[16px]" style={{ color: '#4cc38a' }}>⇣</span>
+        每解碼 1 Byte → 把鹼基與品質字元寫入 FASTQ 對應位置
+      </div>
+
+      {/* ===== 3. FASTQ 即時組合終端機 ===== */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-2xl border" style={{ backgroundColor: '#0f1520', borderColor: '#1e2a38' }}>
+        {/* 終端機標題列 */}
+        <div className="flex items-center justify-between px-4 py-2 border-b shrink-0" style={{ backgroundColor: '#0c1220', borderColor: '#1e2a38' }}>
+          <div className="flex items-center gap-2">
+            <span className="flex gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#ff6b6b' }} />
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#ffb84d' }} />
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#4cc38a' }} />
+            </span>
+            <span className="text-[11px] font-mono font-bold ml-2" style={{ color: '#9fb0c3' }}>
+              SIMULATED_RUN_R1.fastq — 即時組合輸出
+            </span>
+          </div>
+          <span className="text-[10px] font-mono font-bold flex items-center gap-1" style={{ color: '#ff6b6b' }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-blink" style={{ background: '#ff6b6b' }} /> REC
+          </span>
+        </div>
+
+        {/* 終端機內容（黑底 + 語法高亮） */}
+        <div
+          className="flex-1 min-h-0 overflow-auto px-4 py-3 font-mono text-[13px] leading-[2] whitespace-nowrap"
+          style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+        >
+          {/* Line 1：Header（灰字） */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold w-6 shrink-0" style={{ color: '#5b6b80' }}>1</span>
+            <span style={{ color: '#9fb0c3' }}>{FASTQ_HEADER}</span>
+            <span className="text-[10px] shrink-0" style={{ color: '#5b6b80' }}>Header</span>
+          </div>
+          {/* Line 2：Sequence（綠字、目前解碼的鹼基高亮） */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold w-6 shrink-0" style={{ color: '#5b6b80' }}>2</span>
+            <span className="flex items-center gap-x-2">
+              {seqSpans}
+              {pendingDots}
+              <span className="animate-blink" style={{ color: '#4cc38a' }}>▍</span>
+            </span>
+            <span className="text-[10px] shrink-0" style={{ color: '#5b6b80' }}>Sequence</span>
+          </div>
+          {/* Line 3：Option（灰字） */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold w-6 shrink-0" style={{ color: '#5b6b80' }}>3</span>
+            <span style={{ color: '#9fb0c3' }}>+</span>
+            <span className="text-[10px] shrink-0" style={{ color: '#5b6b80' }}>Option</span>
+          </div>
+          {/* Line 4：Quality（黃字、目前轉換的 ASCII 字元高亮） */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold w-6 shrink-0" style={{ color: '#5b6b80' }}>4</span>
+            <span className="flex items-center gap-x-2">
+              {qualSpans}
+              {pendingDots}
+            </span>
+            <span className="text-[10px] shrink-0" style={{ color: '#5b6b80' }}>Quality</span>
           </div>
         </div>
       </div>
