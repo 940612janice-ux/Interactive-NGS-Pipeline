@@ -9,8 +9,12 @@ export const HomeView: React.FC = () => {
   const typedTextRef = useRef<string>('');
   const charIndexRef = useRef(0);
   const scenarioIndexRef = useRef(0);
+  const startedRef = useRef(false);
 
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+
     const typeScenario = () => {
       const scenario = SCENARIOS[scenarioIndexRef.current];
       if (charIndexRef.current < scenario.length) {
@@ -21,12 +25,14 @@ export const HomeView: React.FC = () => {
         }
         setTimeout(typeScenario, 30);
       } else {
-        setTimeout(() => {
-          charIndexRef.current = 0;
-          typedTextRef.current = '';
-          scenarioIndexRef.current = (scenarioIndexRef.current + 1) % SCENARIOS.length;
-          typeScenario();
-        }, 3000);
+        if (scenarioIndexRef.current < SCENARIOS.length - 1) {
+          setTimeout(() => {
+            charIndexRef.current = 0;
+            typedTextRef.current = '';
+            scenarioIndexRef.current++;
+            typeScenario();
+          }, 3000);
+        }
       }
     };
     typeScenario();
@@ -71,7 +77,7 @@ export const HomeView: React.FC = () => {
           {/* Left side */}
           <div className="animate-fade-up">
             <div className="inline-block text-[12px] font-bold tracking-wider mb-5 px-3.5 py-1.5 rounded-full" style={{ color: '#ffb84d', borderColor: 'rgba(255, 184, 77, 0.4)', backgroundColor: 'rgba(255, 184, 77, 0.08)' }}>
-              基因偵探事務所 · 案件登錄
+              基因偵探事務所
             </div>
             <h1 className="text-[44px] leading-tight font-extrabold tracking-wide mb-5">
               歡迎來到<br />
@@ -129,7 +135,7 @@ export const HomeView: React.FC = () => {
           開始尋找！
         </button>
         <p id="start-hint" className="mt-2.5 text-[12px] min-h-[1.4em]" style={{ color: '#9fb0c3' }}>
-          {selectedPatient ? `已選擇：${selectedPatient.name} (${selectedPatient.cancer})` : '請先選擇一位患者'}
+          {selectedPatient ? `已選擇：${selectedPatient.code} (${selectedPatient.cancer})` : '請先選擇一位患者'}
         </p>
       </div>
     </section>

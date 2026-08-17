@@ -173,7 +173,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
       const tooltip = tooltipRef.current;
       if (!tooltip) return;
       tooltip.innerHTML = `
-        <div class="text-[10px] font-mono font-bold mb-2" style="color:#9fb0c3;">
+        <div class="text-[10px] font-mono font-bold mb-2" style="text-shadow:-1px 0 #fff,1px 0 #fff,0 -1px #fff,0 1px #fff;color:#020202;">
           Read #${r + 1} · Cycle ${c + 1}
         </div>
         <div class="flex flex-col gap-1 mb-2.5">
@@ -186,14 +186,14 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
                 <div class="flex-1 h-2 rounded-sm overflow-hidden" style="background:#0f1520;">
                   <div class="h-full rounded-sm" style="width:${pct}%;background:${BASE_COLORS[ch]};${isMax ? 'box-shadow:0 0 6px ' + BASE_COLORS[ch] : ''};"></div>
                 </div>
-                <span class="text-[9px] font-mono w-8 text-right" style="color:${isMax ? '#ffb84d' : '#9fb0c3'};">${Math.round(vals[ch] * 4095)}</span>
+                <span class="text-[9px] font-mono font-bold w-8 text-right" style="text-shadow:-1px 0 #fff,1px 0 #fff,0 -1px #fff,0 1px #fff;color:${isMax ? '#ea9e2c' : '#020202'};">${Math.round(vals[ch] * 4095)}</span>
               </div>`;
           }).join('')}
         </div>
         <div class="flex items-center gap-2">
-          <span class="text-[9px] font-mono" style="color:#9fb0c3;">判讀</span>
+          <span class="text-[9px] font-mono" style="text-shadow:-1px 0 #fff,1px 0 #fff,0 -1px #fff,0 1px #fff;color:#020202;">判讀</span>
           <span class="px-2 py-0.5 rounded text-[12px] font-extrabold font-mono" style="background:${BASE_COLORS[dominant]};color:#080c14;">${dominant}</span>
-          <span class="text-[9px] font-mono" style="color:#9fb0c3;">Q${qscore}</span>
+          <span class="text-[9px] font-mono" style="text-shadow:-1px 0 #fff,1px 0 #fff,0 -1px #fff,0 1px #fff;color:#020202;">Q${qscore}</span>
         </div>
       `;
       tooltip.style.display = 'block';

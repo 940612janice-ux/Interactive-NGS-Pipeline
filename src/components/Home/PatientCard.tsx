@@ -8,7 +8,7 @@ interface PatientCardProps {
 }
 
 export const PatientCard: React.FC<PatientCardProps> = ({ patient, isSelected, onSelect }) => {
-  const initial = patient.name.slice(-1);
+  const initial = 'P';
   const avatarColor = patient.color;
 
   return (
@@ -27,17 +27,13 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient, isSelected, o
       >
         {initial}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="font-bold text-[15px] truncate">
-          {patient.name}
-          <span className="text-[13px] font-normal text-[#9fb0c3] ml-2">{patient.age}歲</span>
-        </div>
-        <span
-          className="inline-block mt-1 text-[12px] px-3.0 py-0.5 rounded-full"
-          style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: '#d6e2f0' }}
-        >
-          {patient.cancer}
-        </span>
+      <div className="flex-1 min-w-0 text-left">
+        <ul className="space-y-0.5 text-[12px] leading-relaxed">
+          <li style={{ color: '#c6d3e3' }}>患者代碼：{patient.code}</li>
+          <li style={{ color: '#c6d3e3' }}>年齡/性別：{patient.age} 歲 / {patient.gender}</li>
+          <li style={{ color: '#c6d3e3' }}>癌別：{patient.cancer}</li>
+          <li style={{ color: '#c6d3e3' }}>Sample ID：{patient.sampleId}</li>
+        </ul>
       </div>
       <span
         className="text-[18px] transition-all duration-150"

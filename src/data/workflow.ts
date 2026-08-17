@@ -160,11 +160,8 @@ export const WORKFLOW: WorkflowStage[] = [
 ];
 
 export const PATIENTS: Patient[] = [
-  { name: '王明宏', age: 58, cancer: '肺癌', cancerEn: 'Lung Cancer', color: '#ff6b6b' },
-  { name: '林美玲', age: 45, cancer: '乳癌', cancerEn: 'Breast Cancer', color: '#ff8fb1' },
-  { name: '陳志強', age: 62, cancer: '大腸直腸癌', cancerEn: 'Colorectal Cancer', color: '#ffb84d' },
-  { name: '許雅婷', age: 50, cancer: '胃癌', cancerEn: 'Gastric Cancer', color: '#4cc38a' },
-];
+  { name: '王明宏', code: 'PT-20260817-01', age: 58, gender: '男', cancer: '非小細胞肺癌', cancerEn: 'Non-small Cell Lung Cancer', sampleId: 'SMP-LU-009', color: '#ff6b6b' },
+  ];
 
 export const BASE_COLORS: BaseColors = {
   A: '#ff6b6b',
@@ -183,10 +180,7 @@ export const SAMPLES: Sample[] = [
 ];
 
 export const SCENARIOS = [
-  '今晚接到緊急案件：四位患者的腫瘤樣本剛下機，BCL 原始資料堆積如山。身為基因偵探，你的任務是追蹤每一條讀段的去向，從模糊的光訊號中，拼湯出致病突變的真相。',
-  '實驗室傳來訊息：定序儀剛跑完，BCL 檔案等待處理。每個 cluster 閃爍的螢光藏著生命密碼，而我們要做的，就是把這些訊號「翻譯」成可讀的基因序列，再一層層剝開變異的面紗。',
-  '新案件進場：四份檢體混雜在同一 flow cell，索引標籤是唯一線索。你需要像整理證物一樣，將每條 reads 精準歸屬，不漏掉任何一個潛在突變。',
-  '品質關卡啟動：Raw FASTQ 猶如未經鑑定的證詞，FastQC 將為你揭示每個鹼基的可信度。接著拿起品質剪刀與接頭刮刀，修剪雜訊，只留乾淨證據。',
-  '比對階段：將乾淨的 reads 如拼圖般貼回 hg38 參考基因組。BWA-MET 精準定位，SAMtools 整理順序，Picard 標記重複，BQSR 校正品質——每一步都為最終變異呼叫鋪路。',
-  '終局之戰：Mutect2 聽取腫瘤與正常雙重證詞，gnomAD 與 PoN 過濾雜音，FilterMutectCalls 下達最終判決。PASS 標籤背後，是臨床可信的體細胞突變，等待你為患者解讀。',
+  '情境任務：體細胞癌症變異分析',
+  '你將扮演基因檢測分析師，處理患者的 DNA 定序資料，從理解原始下機檔案的光學訊號處理',
+  '再到獲得 FASTQ 檔開始正式處理 NGS pipeline，一路過濾與比對，最終找出可信的致病突變。',
 ];

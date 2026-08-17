@@ -14,7 +14,7 @@ export const TopBar: React.FC = () => {
             className="text-[12px] px-3 py-1 rounded-full border"
             style={{ color: '#ffb84d', borderColor: 'rgba(255, 184, 77, 0.4)', backgroundColor: 'rgba(255, 184, 77, 0.08)' }}
           >
-            檢體：{selectedPatient.name} ({selectedPatient.cancer})
+            檢體：{selectedPatient.code} ({selectedPatient.cancer})
           </span>
         )}
       </div>

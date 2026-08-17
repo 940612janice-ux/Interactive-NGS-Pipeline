@@ -1,8 +1,11 @@
 export interface Patient {
   name: string;
+  code: string;
   age: number;
+  gender: string;
   cancer: string;
   cancerEn: string;
+  sampleId: string;
   color: string;
 }
 
