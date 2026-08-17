@@ -447,7 +447,7 @@ const VariantDetailDrawer: React.FC<{ judge: VariantJudge | null; onClose: () =>
           </section>
 
           <section className="rounded-xl border p-3" style={{ backgroundColor: '#0f1520', borderColor: '#1e2a38' }}>
-            <div className="text-[10px] font-bold tracking-wider mb-2" style={{ color: '#4da3ff' }}>Read Support · 讀段支援</div>
+            <div className="text-[10px] font-bold tracking-wider mb-2" style={{ color: '#4da3ff' }}>Read Support · 讀段支援與深度</div>
             <div className="flex h-8 overflow-hidden rounded-lg mb-2">
               <div className="flex items-center justify-center text-[10px] font-mono font-bold transition-all duration-500" style={{ width: `${(refCount / v.dp) * 100}%`, background: 'linear-gradient(90deg,#2f6fce,#4da3ff)', color: '#fff' }}>
                 {refCount}
@@ -537,7 +537,7 @@ export const AnnotationVisualization: React.FC<AnnotationVisualizationProps> = (
   const selectedJudge = useMemo(() => (selected ? evaluate(selected, filters) : null), [selected, filters]);
 
   return (
-    <div className="annotation-visual flex flex-col gap-3 h-[calc(100vh-13rem)] min-h-[680px]">
+    <div className="annotation-visual flex flex-col gap-3">
       <div
         className="relative overflow-hidden rounded-2xl border px-5 py-3.5 flex items-center justify-between shrink-0"
         style={{ background: 'linear-gradient(90deg, rgba(77,163,255,0.16), rgba(15,21,32,0.4) 45%, rgba(122,107,255,0.14))', borderColor: '#2c3a4b' }}
@@ -552,7 +552,10 @@ export const AnnotationVisualization: React.FC<AnnotationVisualizationProps> = (
           </span>
           <h2 className="text-[17px] font-bold whitespace-nowrap" style={{ color: '#e8eef5' }}>Funcotator 變異註釋</h2>
           <span className="text-[15px] shrink-0" style={{ color: '#3b4b5f' }}>|</span>
-          <span className="text-[14px] font-bold whitespace-nowrap" style={{ color: '#ffb84d' }}>最後一步：註釋後變異報告 — 互動篩選與臨床判讀</span>
+          <div className="text-[11px] font-bold whitespace-nowrap leading-snug" style={{ color: '#ffb84d' }}>
+            <div>啟用的註釋資料庫</div>
+            <div>[GenCode] [COSMIC] [CIViC] [gnomAD]</div>
+          </div>
         </div>
         <div className="hidden lg:flex items-center gap-2 ml-3 shrink-0">
           <span className="text-[10px] font-mono px-2.5 py-1 rounded-full whitespace-nowrap" style={{ color: '#9fb0c3', backgroundColor: 'rgba(15,21,32,0.7)', border: '1px solid #2c3a4b' }}>
@@ -561,8 +564,8 @@ export const AnnotationVisualization: React.FC<AnnotationVisualizationProps> = (
         </div>
       </div>
 
-      <div className="grid flex-1 gap-3 min-h-0" style={{ gridTemplateColumns: 'minmax(250px,290px) minmax(0,1fr)' }}>
-        <div className="flex flex-col gap-3 min-h-0 overflow-y-auto pr-0.5">
+      <div className="grid gap-3" style={{ gridTemplateColumns: 'minmax(250px,290px) minmax(0,1fr)' }}>
+        <div className="flex flex-col gap-3">
           <FilterControls filters={filters} passCount={passCount} filteredCount={filteredCount} onChange={setFilters} />
           <div className="rounded-xl border p-2.5 shrink-0" style={{ backgroundColor: '#0f1520', borderColor: '#1e2a38' }}>
             <div className="text-[9px] font-bold tracking-wider mb-1.5" style={{ color: '#9fb0c3' }}>FILTER 判讀圖例</div>
@@ -573,13 +576,13 @@ export const AnnotationVisualization: React.FC<AnnotationVisualizationProps> = (
               <span style={{ color: '#ff8fb1' }}><span className="inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle" style={{ background: '#ff8fb1' }} />FFPE 假突變</span>
             </div>
           </div>
-          <div className="rounded-xl border p-3 text-[10px] leading-relaxed shrink-0" style={{ backgroundColor: '#0f1520', borderColor: '#1e2a38', color: '#9fb0c3' }}>
-            左側模擬器中調整 VAF / Depth / gnomAD / TLOD / Read Bias 五個 Mutect2 過濾參數，下方繪圖與表格將即時以 <span style={{ color: '#4cc38a' }}>PASS</span> / <span style={{ color: '#ff6b6b' }}>FILTERED</span> 重新判讀所有已註釋變異。
+          <div className="rounded-xl border p-3 text-[11px] leading-relaxed shrink-0" style={{ backgroundColor: '#0f1520', borderColor: '#1e2a38', color: '#9fb0c3' }}>
+            左側模擬器中調整 VAF / Depth / gnomAD / TLOD / Read Bias 五個 Mutect2 過濾參數，下方繪圖與表格將「即時」以 <span style={{ color: '#4cc38a' }}>PASS</span> / <span style={{ color: '#ff6b6b' }}>FILTERED</span> 重新判讀所有已註釋變異。
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 min-h-0">
-          <div className="grid gap-3 shrink-0" style={{ gridTemplateColumns: 'minmax(0,1.35fr) minmax(0,1fr)' }}>
+        <div className="flex flex-col gap-3">
+          <div className="grid gap-3" style={{ gridTemplateColumns: 'minmax(0,1.35fr) minmax(0,1fr)' }}>
             <div className="rounded-2xl border p-3" style={{ backgroundColor: '#2c3a4b', borderColor: '#3b4b5f' }}>
               <PanelHeader label="MAF SCATTER" zh="VAF vs 深度散佈圖" color="#4cc38a" />
               <ScatterPlot judges={judges} filters={filters} />
@@ -606,6 +609,18 @@ export const AnnotationVisualization: React.FC<AnnotationVisualizationProps> = (
             <VariantTable judges={judges} onSelect={setSelected} />
             <div className="text-[10px] text-center pt-1.5 shrink-0" style={{ color: '#5b6b7c' }}>點擊任一列開啟詳細判讀卡</div>
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border p-4" style={{ backgroundColor: '#151b28', borderColor: 'rgba(255,213,74,0.35)' }}>
+        <div className="flex items-center gap-2 mb-2.5">
+          <span className="text-[13px] font-bold" style={{ color: '#ffd54a' }}>💡 初學者筆記 — 這些註釋資料庫在做什麼？</span>
+        </div>
+        <div className="flex flex-wrap gap-x-8 gap-y-2">
+          <p className="text-[12px] leading-relaxed" style={{ color: '#c6d3e3' }}><span className="font-bold" style={{ color: '#ffd54a' }}>GenCode</span>：基因結構與位置</p>
+          <p className="text-[12px] leading-relaxed" style={{ color: '#c6d3e3' }}><span className="font-bold" style={{ color: '#ffd54a' }}>COSMIC</span>：體細胞熱點突變</p>
+          <p className="text-[12px] leading-relaxed" style={{ color: '#c6d3e3' }}><span className="font-bold" style={{ color: '#ffd54a' }}>CIViC</span>：臨床用藥與證據等級</p>
+          <p className="text-[12px] leading-relaxed" style={{ color: '#c6d3e3' }}><span className="font-bold" style={{ color: '#ffd54a' }}>gnomAD</span>：人群頻率（胚系背景過濾）</p>
         </div>
       </div>
 

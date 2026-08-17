@@ -52,7 +52,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
       <div class="flex flex-col gap-2.5" style="height:100%;min-height:0;">
         <div class="matrix-scroll flex-1 min-h-0 overflow-auto rounded-lg" style="background:#080c14;border:1px solid #1e2a38;">
           <div class="flex items-center justify-between px-3 py-1.5 border-b sticky top-0 z-10" style="background:#0f1520;border-color:#1e2a38;">
-            <span class="text-[10px] font-mono font-bold tracking-wider" style="color:#4da3ff;">CLUSTER × CYCLE 螢光矩陣</span>
+            <span class="text-[10px] font-mono font-bold tracking-wider" style="color:#4da3ff;">READ × CYCLE 螢光矩陣</span>
             <span class="text-[9px] font-mono" style="color:#9fb0c3;" id="cycle-indicator">Cycle 1 / ${NUM_CYCLES}</span>
           </div>
           <div class="p-2.5">
@@ -79,7 +79,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
     matrixHost.style.alignItems = 'stretch';
 
     const corner = document.createElement('div');
-    corner.textContent = 'C#';
+    corner.textContent = 'Read#';
     corner.style.cssText =
       'display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#5b6b80;font-family:monospace;';
     matrixHost.appendChild(corner);
@@ -98,7 +98,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
       cell.dataset.cluster = r.toString();
       cell.dataset.cycle = c.toString();
       cell.style.cssText =
-        'display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;border-radius:3px;overflow:hidden;aspect-ratio:1/1;background:#0d131d;border:1px solid #111923;cursor:crosshair;transition:box-shadow 0.2s ease, transform 0.15s ease;';
+        'position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1/1;background:#0d131d;border:1px solid #111923;cursor:crosshair;transition:box-shadow 0.2s ease, transform 0.15s ease;';
 
       CHANNELS.forEach((ch) => {
         const q = document.createElement('div');
@@ -106,6 +106,9 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
         const [rr, gg, bb] = hexToRgb(BASE_COLORS[ch]);
         q.dataset.channel = ch;
         q.dataset.intensity = inten.toFixed(2);
+        q.style.position = 'absolute';
+        q.style.inset = '0';
+        q.style.mixBlendMode = 'screen';
         q.style.background = `rgba(${rr},${gg},${bb},${0.08 + inten * 0.92})`;
         cell.appendChild(q);
       });
@@ -120,6 +123,8 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
         cell.style.transform = 'scale(1)';
         hideTooltip();
         updateDecode(0, -1);
+        hovering = false;
+        if (cycleIndicator) cycleIndicator.textContent = `Cycle ${activeCycle + 1} / ${NUM_CYCLES}`;
       });
       return cell;
     };
@@ -135,6 +140,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
 
     const cycleIndicator = host.querySelector('#cycle-indicator') as HTMLElement;
     let activeCycle = 0;
+    let hovering = false;
 
     const updateDecode = (clusterIdx: number, hoverCycle: number) => {
       const decodeSeq = decodeSeqRef.current;
@@ -157,6 +163,8 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
 
     const handleCellFocus = (r: number, c: number) => {
       updateDecode(r, c);
+      hovering = true;
+      if (cycleIndicator) cycleIndicator.textContent = `Cycle ${c + 1} / ${NUM_CYCLES}`;
       const vals = matrix[r][c];
       const dominant = CHANNELS.reduce((best, ch) => (vals[ch] > vals[best] ? ch : best), CHANNELS[0]);
       const max = vals[dominant];
@@ -166,7 +174,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
       if (!tooltip) return;
       tooltip.innerHTML = `
         <div class="text-[10px] font-mono font-bold mb-2" style="color:#9fb0c3;">
-          Cluster #${r + 1} · Cycle ${c + 1}
+          Read #${r + 1} · Cycle ${c + 1}
         </div>
         <div class="flex flex-col gap-1 mb-2.5">
           ${CHANNELS.map((ch) => {
@@ -214,7 +222,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
 
     const animate = () => {
       if (!isPlayingRef.current) return;
-      if (cycleIndicator) cycleIndicator.textContent = `Cycle ${activeCycle + 1} / ${NUM_CYCLES}`;
+      if (cycleIndicator && !hovering) cycleIndicator.textContent = `Cycle ${activeCycle + 1} / ${NUM_CYCLES}`;
 
       cells.forEach((cell) => {
         const el = cell as HTMLElement;
@@ -273,7 +281,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
               {showTips && (
               <div className="dialog-tips mt-2.5 pt-2.5 border-t overflow-y-auto pr-1" style={{ borderColor: '#2e4154', maxHeight: '180px' }}>
                 <ul className="text-[12px] leading-[1.8] flex flex-col gap-0.5" style={{ color: '#c6d3e3' }}>
-                  <li>• 縱軸：cluster（每次拍照拍到的一顆螢光點）</li>
+                  <li>• 縱軸：read（每次拍照拍到的一顆螢光點）</li>
                   <li>• 橫軸：cycle（每讀 1 個鹼基就拍 1 次照）</li>
                   <li>• 每格 4 個色塊 = A/C/G/T 四通道強度</li>
                   <li>• 亮的那格顏色，就是該位置判讀出的鹼基</li>
@@ -301,7 +309,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
           <div className="decode-strip shrink-0 rounded-lg px-3 py-2.5" style={{ backgroundColor: '#0f1520', borderColor: '#1e2a38', borderWidth: '1px' }}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[12px] font-bold font-mono tracking-wide" style={{ color: '#ffb84d' }}>
-                即時解碼 : Cluster #<span id="decode-cluster-id" ref={clusterIdRef}>1</span>
+                即時解碼 : Read #<span id="decode-cluster-id" ref={clusterIdRef}>1</span>
               </span>
             </div>
             <div className="decode-seq flex items-center gap-1 overflow-x-auto pb-1" id="decode-seq" ref={decodeSeqRef} />
@@ -325,7 +333,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
                   </strong>
                   {i === 1 ? (
                     <div className="mt-1">
-                      <p className="text-[12px] leading-[1.5]" style={{ color: '#c6d3e3' }}>例如 : Cluster #1．Cycle 1</p>
+                      <p className="text-[12px] leading-[1.5]" style={{ color: '#c6d3e3' }}>例如 : Read #1．Cycle 1</p>
                       <div className="mt-1.5 font-mono text-[12px] leading-[1.8] p-2.5 rounded-md" style={{ backgroundColor: '#080c14', borderColor: '#1e2a38', borderWidth: '1px' }}>
                         <div><span className="font-bold" style={{ color: '#ff6b6b' }}>A</span><span style={{ color: '#9fb0c3' }}> :</span> 2999</div>
                         <div><span className="font-bold" style={{ color: '#4cc38a' }}>C</span><span style={{ color: '#9fb0c3' }}> :</span> 493</div>

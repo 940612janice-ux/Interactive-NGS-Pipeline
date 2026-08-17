@@ -263,10 +263,10 @@ const DocIconSmall: React.FC<{ highlight: boolean }> = ({ highlight }) => (
 
 const renderContamSections = (done: boolean) => (
   <>
-    <div className="whitespace-nowrap" style={{ color: '#ffb84d' }}>資訊維度 :</div>
+    <div className="whitespace-nowrap text-[12px]" style={{ color: '#ffb84d' }}>資訊維度 :</div>
     <div className="h-1.5" />
     {CONTAM_DIMENSIONS.map((sec) => (
-      <div key={sec.id} className="flex items-center gap-2 whitespace-nowrap" style={{ color: '#c6d3e3' }}>
+      <div key={sec.id} className="flex items-center gap-2 whitespace-nowrap text-[12px]" style={{ color: '#c6d3e3' }}>
         <span style={{ color: '#4da3ff' }}>[{sec.id}]</span>
         <span>{sec.title}</span>
         <span className="ml-auto" style={{ color: done ? '#4cc38a' : '#5b6b7c' }}>{done ? '✓ 已估算' : ''}</span>
@@ -280,7 +280,7 @@ const renderContamSections = (done: boolean) => (
 export const ContaminationVisualization: React.FC<ContaminationVisualizationProps> = ({ onComplete }) => {
   const [status, setStatus] = useState<RunStatus>('idle');
   const [contam, setContam] = useState(0);
-  const [phaseLabel, setPhaseLabel] = useState('等待啟動 — 準備輸入樣本 VCF 與群體頻率資料。');
+  const [phaseLabel, setPhaseLabel] = useState('評估該檢體是否混入了其他人類 DNA !');
   const rafRef = useRef<number | null>(null);
   const timersRef = useRef<number[]>([]);
 
@@ -389,7 +389,7 @@ export const ContaminationVisualization: React.FC<ContaminationVisualizationProp
           <div className="text-center shrink-0">
             <p className="text-[11px]" style={{ color: '#9fb0c3' }}>[ 統計演算法：根據少數等位基因頻率分佈計算污染 ]</p>
             <span
-              className="mt-1.5 inline-block text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wide"
+              className="mt-1.5 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide"
               style={{ color: '#ffb84d', backgroundColor: 'rgba(255,184,77,0.1)', border: '1px solid rgba(255,184,77,0.35)' }}
             >
               Maximum Likelihood Estimation

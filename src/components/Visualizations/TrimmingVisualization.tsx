@@ -110,9 +110,9 @@ function genQualityBoxes(): QualityBox[] {
   return boxes;
 }
 
-// Per Tile Sequence Quality：26 個 Tile × 60 個位置的熱圖資料
+// Per Tile Sequence Quality：26 個 Tile × 50 個位置的熱圖資料
 const TILE_ROWS = 26;
-const TILE_COLS = 60;
+const TILE_COLS = 50;
 
 function genTileQuality(): number[][] {
   const rnd = mulberry32(55);
@@ -130,20 +130,20 @@ function genTileQuality(): number[][] {
 }
 
 function tileColor(q: number): string {
-  if (q >= 30) return `rgba(34, 197, 94, ${0.2 + ((q - 30) / 10) * 0.8})`;
-  if (q >= 20) return `rgba(234, 179, 8, ${0.3 + ((q - 20) / 10) * 0.6})`;
+  if (q >= 30) return `rgba(59, 130, 246, ${0.2 + ((q - 30) / 10) * 0.8})`;
+  if (q >= 20) return `rgba(249, 115, 22, ${0.3 + ((q - 20) / 10) * 0.6})`;
   return `rgba(239, 68, 68, ${0.4 + (q / 20) * 0.6})`;
 }
 
 // Sequence Length Distribution：序列長度長條圖資料
 const LENGTH_BARS: BarItem[] = [
-  { label: '148', value: 2, color: '#3b82f6' },
-  { label: '149', value: 6, color: '#3b82f6' },
-  { label: '150', value: 14, color: '#3b82f6' },
-  { label: '151', value: 82, color: '#3b82f6' },
-  { label: '152', value: 9, color: '#3b82f6' },
-  { label: '153', value: 3, color: '#3b82f6' },
-  { label: '154', value: 1, color: '#3b82f6' },
+  { label: '48', value: 2, color: '#3b82f6' },
+  { label: '49', value: 6, color: '#3b82f6' },
+  { label: '50', value: 14, color: '#3b82f6' },
+  { label: '51', value: 82, color: '#3b82f6' },
+  { label: '52', value: 9, color: '#3b82f6' },
+  { label: '53', value: 3, color: '#3b82f6' },
+  { label: '54', value: 1, color: '#3b82f6' },
 ];
 
 // Overrepresented Sequences：表格資料
@@ -330,7 +330,7 @@ const PerTileHeatmap: React.FC = () => {
       <div className="w-full flex gap-3">
         <div className="grid gap-[2px] text-[9px] text-right pr-1" style={{ gridTemplateRows: `repeat(${rows}, 10px)`, color: '#64748b' }}>
           {Array.from({ length: rows }, (_, r) => (
-            <span key={r} className="flex items-center justify-end leading-none">{r + 1}</span>
+            <span key={r} className="flex items-center justify-end leading-none">{1101 + r}</span>
           ))}
         </div>
         <div className="flex-1 min-w-0 max-w-[620px]">
@@ -343,7 +343,7 @@ const PerTileHeatmap: React.FC = () => {
                     key={`${r}-${c}-${warn ? threshold : 0}`}
                     className={`rounded-[1px] ${warn ? 'tile-warn' : ''}`}
                     style={{ backgroundColor: tileColor(q), height: 10 }}
-                    title={`Tile ${r + 1} · Position ${c + 1} · Q${q.toFixed(0)}`}
+                    title={`Tile ${1101 + r} · Position ${c + 1} · Q${q.toFixed(0)}`}
                   />
                 );
               })
@@ -353,7 +353,7 @@ const PerTileHeatmap: React.FC = () => {
             <span>Position 1</span>
             <span>20</span>
             <span>40</span>
-            <span>60</span>
+            <span>50</span>
           </div>
         </div>
       </div>
@@ -741,8 +741,11 @@ const NBaseFilterChart: React.FC = () => {
         </defs>
       </svg>
 
-      <div className="mt-1.5 text-center text-[10px]" style={{ color: '#64748b' }}>
-        N 鹼基含量高的 Reads 將被去除，剩餘序列自動接合
+      <div className="mt-1.5 text-center text-[12px]" style={{ color: '#64748b' }}>
+        N 鹼基含量高的Reads 將被去除，剩餘序列自動接合
+      </div>
+      <div className="mt-1.5 text-center text-[12px]" style={{ color: '#64748b' }}>
+        (依選擇工具設定的標準決定)
       </div>
     </div>
   );
@@ -1320,7 +1323,7 @@ const CoreQCTab: React.FC = () => {
         subtitle="拖曳進度條設定裁剪位置"
         status="pass"
         badgeText="Phred Q"
-        info={<InfoHint text="拖曳進度條設定裁剪位置，位於裁剪點右側的後續片段將被切除。" />}
+        info={<InfoHint text="使用滑動窗口修剪法，當窗口內平均品質低於設定值時切除後續序列，或直接移除 Reads 兩端低品質的鹼基。" />}
         legend={
           <>
             <LegendItem color="#3b82f6" label="Median 中位數" />
@@ -1338,7 +1341,7 @@ const CoreQCTab: React.FC = () => {
         subtitle="Adapter 含量（定序尾端累積）"
         status="pass"
         badgeText="% of reads"
-        info={<InfoHint text="檢測 DNA 尾端是否殘留建庫用的人工接頭（Adapter）。標記並去除接頭可避免後續比對到錯誤的基因組位置。" />}
+        info={<InfoHint text="必須精確移除標記的 Adapter，否則會導致 Reads 被錯誤比對到參考基因組的不相關位置。" />}
         legend={adapters.map((a) => <LegendItem key={a.name} color={a.color} label={a.name} />)}
       >
         <AdapterTagChart adapters={adapters} />
@@ -1349,7 +1352,7 @@ const CoreQCTab: React.FC = () => {
         subtitle="GC 過濾閾值調整"
         status="pass"
         badgeText="GC %"
-        info={<InfoHint text="過濾掉整體 GC 含量比例過高或過低的 Reads。" />}
+        info={<InfoHint text="針對 GC 異常的分佈，可比對「Overrepresented sequences」找出污染物序列並過濾。但在 RNA-Seq 中，分佈寬度偏離理論曲線是常見的現象。" />}
         legend={
           <>
             <LegendItem color="#22c55e" label="通過（保留）" />
@@ -1365,7 +1368,7 @@ const CoreQCTab: React.FC = () => {
         subtitle="PCR 重複序列比例檢測"
         status="warn"
         badgeText="Duplicate Reads"
-        info={<InfoHint text="移除完全一模一樣的重複序列，減少 PCR 擴增誤差。" />}
+        info={<InfoHint text="在分析中，通常會使用工具（如 MarkDuplicates）移除或忽略重複序列，因為移除這些序列會導致高表達基因的豐度資訊損失，影響定量準確性。" />}
         legend={
           <>
             <LegendItem color="#60a5fa" label="掃描光束" />
@@ -1391,7 +1394,7 @@ const TraitsTab: React.FC = () => {
         subtitle="序列長度分布"
         status="pass"
         badgeText="bp"
-        info={<InfoHint text="排除因先前修剪接頭/尾端而「過短」的 reads，以確保留下來的 Reads 都有足夠長度能精準比對。" />}
+        info={<InfoHint text="修剪後需移除過短的 Reads，因為極短的片段無法在基因組比對中提供精確的定位資訊。(附圖為正常狀態，不須再做移除)" />}
         legend={<LegendItem color="#3b82f6" label="Reads（%）" />}
       >
         <BarChart bars={LENGTH_BARS} yMax={100} />
@@ -1402,7 +1405,7 @@ const TraitsTab: React.FC = () => {
         subtitle="N 鹼基雷射過濾"
         status="pass"
         badgeText="N %"
-        info={<InfoHint text="去除未知鹼基 (N) 含量比例過高的 Reads。" />}
+        info={<InfoHint text="包含過多 N 的 Reads 缺乏有效生物資訊，應予以移除。若比例極高，通常表示該次定序失敗，建議重新實驗。" />}
         legend={
           <>
             <LegendItem color="#9ca3af" label="N 鹼基" />
@@ -1419,7 +1422,7 @@ const TraitsTab: React.FC = () => {
         subtitle="逐鹼基四鹼基組成（A/T/C/G）"
         status="warn"
         badgeText="ATCG"
-        info={<InfoHint text="檢查數據中 A、T、C、G 四種鹼基在每位置的分布是否均勻。若前段波動較大，通常為基因建庫化學反應限制或殘留特異性接頭。" />}
+        info={<InfoHint text="若前段出現顯著波動，代表接頭或引子未除乾淨，需重新檢查修剪步驟，並標記使下游忽略誤判變異。" />}
         legend={bases.map((b) => <LegendItem key={b.name} color={b.color} label={`${b.name} 鹼基`} />)}
       >
         <BaseContentMaskChart />
@@ -1434,14 +1437,14 @@ const MachineTab: React.FC = () => (
     <ChartCard
       title="Per Tile Sequence Quality"
       subtitle="逐 Tile × 位置之定序品質熱圖"
-      status="pass"
+      status="warn"
       badgeText="Heatmap"
-      info={<InfoHint text="檢測定序晶片上各個物理區域（Tile）的品質。若僅有特定區域出現異常（熱圖顯現偏紅/藍），通常為晶片局部瑕疵、氣泡或流道堵塞導致。" />}
+      info={<InfoHint text="若僅有局部區域異常，可透過品質修剪排除受影響的鹼基；若大規模異常則無法透過軟體修復，需重新定序。" />}
       legend={
         <>
-          <LegendItem color="#22c55e" label="Q ≥ 30" />
-          <LegendItem color="#eab308" label="Q 20–30" />
-          <LegendItem color="#ef4444" label="Q < 20" />
+          <LegendItem color="#3b82f6" label="Deviations ≧ 0" />
+          <LegendItem color="#f97316" label="-2 ≦ Deviations ＜ 0" />
+          <LegendItem color="#ef4444" label="Deviations ＜ -2" />
           <LegendItem color="#f87171" label="警戒外框" />
         </>
       }
@@ -1454,7 +1457,7 @@ const MachineTab: React.FC = () => (
       subtitle="過度呈現之序列（前 5 筆）"
       status="fail"
       badgeText="Table"
-      info={<InfoHint text="檢查數據中是否有出現頻率異常高（> 0.1%）的特定片段。常見原因包含殘留的 Adapter、引物，或生物樣本本身高度表達的 RNA（如 rRNA）。" />}
+      info={<InfoHint text="確認來源後，若是接頭或引子會在修剪階段將其精確移除。" />}
     >
       <OverrepTable />
     </ChartCard>

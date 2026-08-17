@@ -138,9 +138,9 @@ function genBaseContent(): ChartSeries[] {
   });
 }
 
-// Per Tile Sequence Quality：26 個 Tile × 60 個位置的熱圖資料
+// Per Tile Sequence Quality：26 個 Tile × 50 個位置的熱圖資料
 const TILE_ROWS = 26;
-const TILE_COLS = 60;
+const TILE_COLS = 50;
 
 function genTileQuality(): number[][] {
   const rnd = mulberry32(55);
@@ -158,8 +158,8 @@ function genTileQuality(): number[][] {
 }
 
 function tileColor(q: number): string {
-  if (q >= 30) return `rgba(34, 197, 94, ${0.2 + ((q - 30) / 10) * 0.8})`;
-  if (q >= 20) return `rgba(234, 179, 8, ${0.3 + ((q - 20) / 10) * 0.6})`;
+  if (q >= 30) return `rgba(59, 130, 246, ${0.2 + ((q - 30) / 10) * 0.8})`;
+  if (q >= 20) return `rgba(249, 115, 22, ${0.3 + ((q - 20) / 10) * 0.6})`;
   return `rgba(239, 68, 68, ${0.4 + (q / 20) * 0.6})`;
 }
 
@@ -174,13 +174,13 @@ const DUP_BARS: BarItem[] = DUPLICATION_LEVELS.map((label, i) => ({
 
 // Sequence Length Distribution：序列長度長條圖資料
 const LENGTH_BARS: BarItem[] = [
-  { label: '148', value: 2, color: '#3b82f6' },
-  { label: '149', value: 6, color: '#3b82f6' },
-  { label: '150', value: 14, color: '#3b82f6' },
-  { label: '151', value: 82, color: '#3b82f6' },
-  { label: '152', value: 9, color: '#3b82f6' },
-  { label: '153', value: 3, color: '#3b82f6' },
-  { label: '154', value: 1, color: '#3b82f6' },
+  { label: '48', value: 2, color: '#3b82f6' },
+  { label: '49', value: 6, color: '#3b82f6' },
+  { label: '50', value: 14, color: '#3b82f6' },
+  { label: '51', value: 82, color: '#3b82f6' },
+  { label: '52', value: 9, color: '#3b82f6' },
+  { label: '53', value: 3, color: '#3b82f6' },
+  { label: '54', value: 1, color: '#3b82f6' },
 ];
 
 // Overrepresented Sequences：表格資料
@@ -202,7 +202,7 @@ interface ModuleStatus {
 const MODULES: ModuleStatus[] = [
   { name: 'Adapter Content', en: 'Adapter 含量', status: 'pass' },
   { name: 'Per Base Sequence Quality', en: '鹼基定序品質', status: 'pass' },
-  { name: 'Per Tile Sequence Quality', en: ' Tile 定序品質', status: 'pass' },
+  { name: 'Per Tile Sequence Quality', en: ' Tile 定序品質', status: 'warn' },
   { name: 'Per Sequence Quality Scores', en: '序列品質分數', status: 'pass' },
   { name: 'Per Base Sequence Content', en: '鹼基序列組成', status: 'warn' },
   { name: 'Per Sequence GC Content', en: '序列 GC 含量', status: 'pass' },
@@ -256,9 +256,10 @@ const ChartCard: React.FC<{
   status?: Status;
   badgeText?: string;
   legend?: React.ReactNode;
+  info?: React.ReactNode;
   className?: string;
   children: React.ReactNode;
-}> = ({ title, subtitle, status, badgeText, legend, className, children }) => {
+}> = ({ title, subtitle, status, badgeText, legend, info, className, children }) => {
   return (
     <div
       className={`flex flex-col rounded-2xl border overflow-hidden min-h-[280px] ${className || ''}`}
@@ -269,6 +270,7 @@ const ChartCard: React.FC<{
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-[14px] font-bold" style={{ color: '#e8eef5' }}>{title}</h3>
             {status && <StatusBadge status={status} />}
+            {info}
           </div>
           {subtitle && (
             <p className="text-[11px] mt-0.5" style={{ color: '#9fb0c3' }}>{subtitle}</p>
@@ -296,6 +298,24 @@ const LegendItem: React.FC<{ color: string; label: string }> = ({ color, label }
   <span className="inline-flex items-center gap-1.5 text-[10px]" style={{ color: '#94a3b8' }}>
     <span className="inline-block w-3 h-[2px] rounded" style={{ backgroundColor: color, boxShadow: `0 0 4px ${color}` }} />
     {label}
+  </span>
+);
+
+// 提示符號 ℹ️（hover 顯示說明文字）
+const InfoHint: React.FC<{ text: string }> = ({ text }) => (
+  <span className="relative inline-flex items-center group">
+    <span
+      className="inline-flex w-[18px] h-[18px] rounded-full items-center justify-center text-[10px] cursor-help select-none"
+      style={{ color: '#94a3b8', backgroundColor: '#0f172a', borderColor: '#334155', borderWidth: '1px' }}
+    >
+      ℹ️
+    </span>
+    <span
+      className="absolute left-1/2 -translate-x-1/2 top-full mt-2 hidden group-hover:block w-56 px-3 py-2 rounded-lg text-[11px] font-normal leading-snug z-20 shadow-xl"
+      style={{ backgroundColor: '#0f172a', borderColor: '#334155', borderWidth: '1px', color: '#c6d3e3' }}
+    >
+      {text}
+    </span>
   </span>
 );
 
@@ -485,7 +505,7 @@ const PerTileHeatmap: React.FC = () => {
     <div className="w-full flex gap-3">
       <div className="grid gap-[2px] text-[9px] text-right pr-1" style={{ gridTemplateRows: `repeat(${rows}, 10px)`, color: '#64748b' }}>
         {Array.from({ length: rows }, (_, r) => (
-          <span key={r} className="flex items-center justify-end leading-none">{r + 1}</span>
+          <span key={r} className="flex items-center justify-end leading-none">{1101 + r}</span>
         ))}
       </div>
       <div className="flex-1 min-w-0 max-w-[620px]">
@@ -496,7 +516,7 @@ const PerTileHeatmap: React.FC = () => {
                 key={`${r}-${c}`}
                 className="rounded-[1px]"
                 style={{ backgroundColor: tileColor(q), height: 10 }}
-                title={`Tile ${r + 1} · Position ${c + 1} · Q${q.toFixed(0)}`}
+                title={`Tile ${1101 + r} · Position ${c + 1} · Q${q.toFixed(0)}`}
               />
             ))
           )}
@@ -505,7 +525,7 @@ const PerTileHeatmap: React.FC = () => {
           <span>Position 1</span>
           <span>20</span>
           <span>40</span>
-          <span>60</span>
+          <span>50</span>
         </div>
       </div>
     </div>
@@ -550,6 +570,7 @@ const CoreQCTab: React.FC = () => {
         subtitle="逐鹼基定序品質"
         status="pass"
         badgeText="Phred Q"
+        info={<InfoHint text="透過盒狀圖評估 Reads 各位置的鹼基準確度。Illumina 品質通常隨讀取長度增加而下降，Phred 分數高於 20 (Q20) 代表 99% 準確度，是數據品質的基準線。" />}
         legend={
           <>
             <LegendItem color="#3b82f6" label="Median 中位數" />
@@ -566,6 +587,7 @@ const CoreQCTab: React.FC = () => {
         subtitle="Adapter 含量（定序尾端累積）"
         status="pass"
         badgeText="% of reads"
+        info={<InfoHint text="檢測序列末端是否包含 Adapter。這通常發生在插入片段短於定序長度時，導致儀器「讀穿」到接頭序列。" />}
         legend={adapters.map((a) => <LegendItem key={a.name} color={a.color} label={a.name} />)}
       >
         <LineChart
@@ -583,6 +605,7 @@ const CoreQCTab: React.FC = () => {
         subtitle="逐序列 GC 含量分布"
         status="pass"
         badgeText="GC %"
+        info={<InfoHint text="統計 Reads 的 GC 含量分佈。單一物種應呈「常態分佈」，若出現異常尖峰，通常表示 Adapter 污染或或其他物種的核酸污染。" />}
         legend={
           <>
             <LegendItem color="#3b82f6" label="理論分布" />
@@ -605,6 +628,7 @@ const CoreQCTab: React.FC = () => {
         subtitle="序列重複程度分布"
         status="warn"
         badgeText="% of library"
+        info={<InfoHint text="評估序列重複出現的比例。重複可能來自 PCR 過度擴增，或是樣本中自然高表達的轉錄本。" />}
         legend={
           <>
             <LegendItem color="#22c55e" label="低重複" />
@@ -706,6 +730,7 @@ const TraitsTab: React.FC = () => {
         subtitle="序列長度分布"
         status="pass"
         badgeText="bp"
+        info={<InfoHint text="顯示 Reads 長度的統計。定序儀原始數據長度通常一致，修剪後則會產生長度不一的分佈。" />}
         legend={<LegendItem color="#3b82f6" label="Reads（%）" />}
       >
         <BarChart bars={LENGTH_BARS} yMax={100} />
@@ -716,6 +741,7 @@ const TraitsTab: React.FC = () => {
         title="Per Sequence Quality Score"
         subtitle="每條 Read 平均品質分數分布"
         badgeText="Phred Q"
+        info={<InfoHint text="計算每條 Read 的平均品質分佈，判斷是否有一大部分的 Reads 整體品質過低。" />}
         legend={<LegendItem color="#3b82f6" label="Observed 實際分布" />}
       >
         <PerSeqQualityChart />
@@ -726,6 +752,7 @@ const TraitsTab: React.FC = () => {
         subtitle="逐鹼基 N 含量"
         status="pass"
         badgeText="N %"
+        info={<InfoHint text="統計定序儀無法確定鹼基類型 (N) 的比例。理想值應接近 0；若出現顯著峰值，通常代表儀器發生硬體或化學試劑問題。" />}
         legend={<LegendItem color="#22c55e" label="N 含量（%）" />}
       >
         <LineChart
@@ -742,6 +769,7 @@ const TraitsTab: React.FC = () => {
         subtitle="逐鹼基四鹼基組成（A/T/C/G）"
         status="warn"
         badgeText="ATCG"
+        info={<InfoHint text="檢查四種鹼基在每個位置的分佈。在分析中，前 10-15 bp 通常會有明顯波動，這是因為核甘酸引子引發的固有技術偏好。" />}
         legend={bases.map((b) => <LegendItem key={b.name} color={b.color} label={`${b.name} 鹼基`} />)}
       >
         <LineChart
@@ -763,13 +791,14 @@ const MachineTab: React.FC = () => (
     <ChartCard
       title="Per Tile Sequence Quality"
       subtitle="逐 Tile × 位置之定序品質熱圖"
-      status="pass"
+      status="warn"
       badgeText="Heatmap"
+      info={<InfoHint text="檢查定序晶片各區域的品質。若特定區域出現異常（熱圖偏紅），通常是因氣泡、流道堵塞或晶片瑕疵引起。" />}
       legend={
         <>
-          <LegendItem color="#22c55e" label="Q ≥ 30" />
-          <LegendItem color="#eab308" label="Q 20–30" />
-          <LegendItem color="#ef4444" label="Q < 20" />
+          <LegendItem color="#3b82f6" label="Deviations ≧ 0" />
+          <LegendItem color="#f97316" label="-2 ≦ Deviations ＜ 0" />
+          <LegendItem color="#ef4444" label="Deviations ＜ -2" />
         </>
       }
     >
@@ -781,6 +810,7 @@ const MachineTab: React.FC = () => (
       subtitle="過度呈現之序列（前 5 筆）"
       status="fail"
       badgeText="Table"
+      info={<InfoHint text="列出比例 > 0.1% 的特定序列。在 DNA-Seq 中，這幾乎代表混入了太多的人工接頭或引子雜質。" />}
     >
       <OverrepTable />
     </ChartCard>
@@ -846,7 +876,7 @@ const SummaryRow: React.FC<{ label: string; count: number; color: string }> = ({
 );
 
 const FileInfoPanel: React.FC = () => {
-  const summary = { pass: 7, warn: 2, fail: 1 };
+  const summary = { pass: 6, warn: 3, fail: 1 };
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col gap-4 sticky top-0 self-start">
       <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: '#1e293b', borderColor: '#334155' }}>
@@ -893,7 +923,7 @@ const FileInfoPanel: React.FC = () => {
               </tr>
               <tr className="border-t" style={{ borderColor: '#334155' }}>
                 <td className="px-4 py-1.5" style={{ color: '#94a3b8' }}>Sequence length</td>
-                <td className="px-4 py-1.5 text-right font-mono" style={{ color: '#e8eef5' }}>151 bp</td>
+                <td className="px-4 py-1.5 text-right font-mono" style={{ color: '#e8eef5' }}>50 bp</td>
               </tr>
               <tr className="border-t border-b-0" style={{ borderColor: '#334155' }}>
                 <td className="px-4 py-1.5" style={{ color: '#94a3b8' }}>%GC</td>

@@ -200,7 +200,7 @@ export const BasecallingVisualization: React.FC<BasecallingVisualizationProps> =
         {/* 卡片 1：原始 BCL 位元 */}
         <div className="rounded-2xl border p-4 flex flex-col gap-3" style={{ backgroundColor: '#16202c', borderColor: '#2e4154' }}>
           <div className="text-[12px] font-bold tracking-wide" style={{ color: '#4da3ff' }}>
-            1. 原始 BCL 位元 <span className="opacity-70">(Binary 1-Byte)</span>
+            1. 解碼原始 BCL 位元 <span className="opacity-70">(Binary 1-Byte)</span>
           </div>
           {/* 十六進位 + 二進位 */}
           <div className="rounded-lg py-2 text-center" style={{ backgroundColor: '#0f1520', border: '1px solid #1e2a38' }}>

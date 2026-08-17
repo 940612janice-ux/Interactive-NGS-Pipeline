@@ -8,10 +8,11 @@ interface FlowNodeProps {
   stageIndex: number;
   stepIndex: number;
   isSub?: boolean;
+  subColor?: string;
   onClick: () => void;
 }
 
-const FlowNode: React.FC<FlowNodeProps> = ({ step, stageIndex, stepIndex, isSub, onClick }) => {
+const FlowNode: React.FC<FlowNodeProps> = ({ step, stageIndex, stepIndex, isSub, subColor = '#ffb84d', onClick }) => {
   const stageColor = STAGE_COLORS[stageIndex % STAGE_COLORS.length];
   const stepNumber = stepIndex + 1;
 
@@ -24,13 +25,13 @@ const FlowNode: React.FC<FlowNodeProps> = ({ step, stageIndex, stepIndex, isSub,
           : 'bg-[#2c3a4b] border border-[#3b4b5f] border-l-4'
       } hover:-translate-y-0.5 hover:shadow-lg`}
       style={{
-        borderLeftColor: isSub ? '#ffb84d' : stageColor,
+        borderLeftColor: isSub ? subColor : stageColor,
         boxShadow: isSub ? '0 0 0 0 transparent' : undefined,
       }}
     >
       <span
         className="flex items-center justify-center min-w-[22px] h-5 rounded-full text-[11px] font-extrabold text-[#0f1520]"
-        style={{ backgroundColor: isSub ? '#ffb84d' : stageColor }}
+        style={{ backgroundColor: isSub ? subColor : stageColor }}
       >
         {stepNumber}
       </span>
@@ -68,6 +69,7 @@ const FlowStage: React.FC<FlowStageProps> = ({ stage, stageIndex, onStepClick })
               stageIndex={stageIndex}
               stepIndex={stepIndex}
               isSub={stepIndex > 0}
+              subColor={stageIndex <= 2 ? stageColor : undefined}
               onClick={() => onStepClick(stageIndex, stepIndex)}
             />
             {step.output && (

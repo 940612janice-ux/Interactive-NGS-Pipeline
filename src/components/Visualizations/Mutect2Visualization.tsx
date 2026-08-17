@@ -79,7 +79,7 @@ const EXAMPLES: Record<TabKey, ExampleConfig> = {
     chr: 'chr7',
     position: '55174014',
     scenario:
-      'Normal BAM 因抽樣覆蓋深度較低（Sampling Noise）未測出變異，看似腫瘤特有突變。但比對 gnomAD 後證明該變異在人群中頻率極高，實為天生遺傳變異（Germline）。',
+      '正常組織在這個位置覆蓋深度太低，剛好沒讀到變異的 DNA，導致正常組織看起來完全正常（0% 變異）。但比對 gnomAD 後證明該變異在人群中頻率極高，實為天生遺傳變異（Germline）。',
     bam: {
       context: 'AGCT',
       refBase: 'C',
@@ -122,16 +122,16 @@ const EXAMPLES: Record<TabKey, ExampleConfig> = {
     filterTag: 'germline',
     filterColor: '#4cc38a',
     infoNote:
-      'pop_AF=0.4215：此變異在 gnomAD 中的族群等位基因頻率為 42.15%。超過 40% 幾乎可斷言是常見的人類多型性，絕非罕見的腫瘤驅動突變。',
+      'pop_AF=0.4215：超過 40% 幾乎可斷言是常見的人類多型性，絕非罕見的腫瘤驅動突變。',
     notes: [
       '為什麼要查 gnomAD？體細胞突變和遺傳變異的界線，往往要「看人群」才能判斷。若某變異在大量抽樣中佔有一定比例，那它更可能是天生就有的 Germline 變異，而不是腫瘤新產生的突變。',
       '標籤 `germline`：Mutect2 判斷此位點是「遺傳的」，於是寫入 FILTER 欄，後續的 FilterMutectCalls 步驟會評估是否把這個紀錄丟掉。',
-      'Sampling Noise（抽樣雜訊）是指覆蓋深度太低導致讀數不足，並非真的「沒有變異」——所以 Normal 測不到 ≠ 不存在，必須靠人群頻率佐證。',
+      '覆蓋深度太低是指這個位置讀取次數太少，並非真的「沒有變異」——所以 Normal 測不到 ≠ 不存在，必須靠人群頻率佐證。',
     ],
   },
   pon: {
     key: 'pon',
-    tabLabel: '案例二：PoN 平台技術雜訊碰撞 (TP53 基因)',
+    tabLabel: '案例二：PoN 平台技術雜訊檢測 (如:TP53 基因)',
     chipEmoji: '🔬',
     gene: 'TP53',
     locus: 'chr17:7,577,538',
@@ -153,7 +153,7 @@ const EXAMPLES: Record<TabKey, ExampleConfig> = {
       file: 'PoN.vcf',
       color: '#b57edc',
       command: '$ bcftools query -r chr17:7577538 PoN.vcf',
-      description: 'Panel of Normals（由 50 位健康人建立的技術雜訊資料庫）',
+      description: '由 50 位健康人建立的技術雜訊資料庫',
       query: [
         { label: 'POS', value: '7577538' },
         { label: 'REF', value: 'G' },
@@ -181,10 +181,10 @@ const EXAMPLES: Record<TabKey, ExampleConfig> = {
     filterTag: 'pon',
     filterColor: '#b57edc',
     infoNote:
-      'PoN_COUNT=18 意思：50 位健康人中有 18 位（36%）在相同座標都出現過完全相同的微弱訊號。比例高到不可能是巧合，因此果斷標記為 `pon` 技術雜訊。',
+      'PoN_COUNT=18：50 位健康人中有 18 位（36%）在相同座標都出現過完全相同的微弱訊號。比例高到不可能是巧合，因此果斷標記為 `pon` 技術雜訊。',
     notes: [
       '為什麼 PoN 抓得到平台雜訊？每一種定序儀與試劑批次都會有「固定會出現的錯誤」——例如 PCR 在 GC-rich 區掉鹼基、光學訊號串擾等。PoN 用 50 位健康人把這些「機器/試劑特有」訊號統計下來；當你的 Tumor 出現完全一樣的訊號，就代表這是系統性 Artifact，而非生物學上的真實突變。',
-      '標籤 `pon` 的意思：此位點在 Panel of Normals 中被太多健康人誤報，Mutect2 判定它是技術雜訊，不是真實 Somatic 突變。',
+      '標籤 `pon`：此位點在 Panel of Normals 中被太多健康人誤報，Mutect2 判定它是技術雜訊，不是真實 Somatic 突變。',
       'GC 豐富（GC-rich）區特別容易在 PCR 擴增時出錯，所以「微弱 ALT 頻率」在低覆蓋或高 GC 區極可能是假訊號，需要 Cross-check PoN。',
     ],
   },
@@ -206,7 +206,7 @@ function RenderField({ field, filterColor }: { field: VcfField; filterColor: str
         initial={{ scale: 0.4, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 16 }}
-        className={`${size} px-2 py-0.5 rounded-md text-[11px] font-extrabold tracking-wide`}
+        className={`${size} px-2 py-0.5 rounded-md text-[12px] font-extrabold tracking-wide`}
         style={{ color: '#0d1117', backgroundColor: filterColor, boxShadow: `0 0 14px ${filterColor}aa` }}
       >
         {field.text}
@@ -225,7 +225,7 @@ function RenderField({ field, filterColor }: { field: VcfField; filterColor: str
   };
   const weight = field.kind === 'ref' || field.kind === 'alt' ? 'font-bold' : '';
   return (
-    <span className={`${size} ${weight} font-mono`} style={{ color: colors[field.kind] }}>
+    <span className={`${size} ${weight} text-[12px] font-mono`} style={{ color: colors[field.kind] }}>
       {field.text}
     </span>
   );
@@ -485,19 +485,19 @@ export const Mutect2Visualization: React.FC<Mutect2VisualizationProps> = ({ onCo
           </motion.div>
           <div className="flex-1 min-w-[220px]">
             <h2 className="text-[17px] font-bold" style={{ color: '#e8eef5' }}>
-              GATK Mutect2 原始呼叫 <span className="text-[13px] font-medium" style={{ color: '#6b7b8c' }}>(Initial Somatic Variant Calling) — 檔案層級碰撞教學</span>
+              GATK Mutect2 原始呼叫 <span className="text-[13px] font-medium" style={{ color: '#6b7b8c' }}>(Initial Somatic Variant Calling)</span>
             </h2>
             <p className="text-[12px] mt-0.5" style={{ color: '#9fb0c3' }}>
-              雙樣本 <span style={{ color: '#ff6b6b' }}>Tumor</span> vs. <span style={{ color: '#4da3ff' }}>Matched Normal</span> 比對 + 背景數據庫 (<span style={{ color: '#4da3ff' }}>gnomAD</span> &amp; <span style={{ color: '#b57edc' }}>PoN</span>) 動態標記機制。
+              患者樣本 <span style={{ color: '#ff6b6b' }}>Tumor</span> vs. <span style={{ color: '#4da3ff' }}>Matched Normal</span> 比對 + 背景數據庫 (<span style={{ color: '#4da3ff' }}>gnomAD</span> &amp; <span style={{ color: '#b57edc' }}>PoN</span>) 標記。
             </p>
           </div>
           <motion.span
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="px-3 py-1.5 rounded-full text-[11px] font-bold"
+            className="px-3 py-1.5 rounded-full text-[13px] font-bold"
             style={{ backgroundColor: 'rgba(255,184,77,0.12)', color: '#ffb84d', border: '1px solid rgba(255,184,77,0.45)', boxShadow: '0 0 14px rgba(255,184,77,0.25)' }}
           >
-            階段：Phase 1 - Raw Variant Calling (未過濾變異呼叫)
+            檢測目的 : 排除常見因素誤判的假陽性變異 !
           </motion.span>
         </div>
 
@@ -530,7 +530,7 @@ export const Mutect2Visualization: React.FC<Mutect2VisualizationProps> = ({ onCo
         className="rounded-xl border p-4 text-[12px] leading-relaxed"
         style={{ backgroundColor: '#121826', borderColor: '#262d3d', color: '#c6d3e3' }}
       >
-        <span className="text-[10px] font-bold uppercase tracking-wider mr-2" style={{ color: example.db.color }}>
+        <span className="text-[12px] font-bold uppercase tracking-wider mr-2" style={{ color: example.db.color }}>
           scenario
         </span>
         目標基因座標：<span className="font-mono font-bold" style={{ color: '#ffb84d' }}>{example.locus}</span>（{example.gene}）- {example.scenario}
@@ -540,7 +540,7 @@ export const Mutect2Visualization: React.FC<Mutect2VisualizationProps> = ({ onCo
         <button
           onClick={playing ? () => setPlaying(false) : startPlay}
           disabled={playing}
-          className="px-4 py-2.5 rounded-xl text-[13px] font-bold flex items-center gap-2 transition-all"
+          className="px-4 py-2.5 rounded-xl text-[12px] font-bold flex items-center gap-2 transition-all"
           style={{
             backgroundColor: playing ? '#2a1a0f' : '#ffb84d',
             color: playing ? '#ffb84d' : '#0d1117',
@@ -582,7 +582,7 @@ export const Mutect2Visualization: React.FC<Mutect2VisualizationProps> = ({ onCo
               }}
             >
               <span
-                className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold"
+                className="w-5 h-5 rounded-md flex items-center justify-center text-[12px] font-bold"
                 style={{ backgroundColor: active ? accent : '#1c2333', color: active ? '#0d1117' : '#9fb0c3' }}
               >
                 {i + 1}
@@ -607,7 +607,7 @@ export const Mutect2Visualization: React.FC<Mutect2VisualizationProps> = ({ onCo
               0,
               <Dna size={16} />,
               '#ffb84d',
-              'Read 比對 (BAM Level) — IGV 雙軌對齊',
+              'Read 比對',
               <div className="flex flex-col gap-4">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
@@ -647,7 +647,7 @@ export const Mutect2Visualization: React.FC<Mutect2VisualizationProps> = ({ onCo
               1,
               <Search size={16} />,
               example.db.color,
-              '資料庫碰撞 (VCF Lookup)',
+              '資料庫比對標記',
               <div className="flex flex-col gap-3 flex-1">
                 <div className="rounded-lg overflow-hidden" style={{ backgroundColor: '#0b0f17', border: '1px solid #1e2a38' }}>
                   <div className="flex items-center gap-1.5 px-3 py-1.5" style={{ backgroundColor: '#151b28', borderBottom: '1px solid #1e2a38' }}>
@@ -742,13 +742,13 @@ export const Mutect2Visualization: React.FC<Mutect2VisualizationProps> = ({ onCo
                   className="rounded-lg px-3 py-2 font-mono overflow-x-auto flex-1"
                   style={{ backgroundColor: '#080c14', border: '1px solid #1e2a38' }}
                 >
-                  <div className="text-[11px] font-bold mb-1.5" style={{ color: '#6b7b8c' }}>
+                  <div className="text-[12px] font-bold mb-1.5" style={{ color: '#6b7b8c' }}>
                     $ mutect2 … --germline-resource gnomAD.vcf --panel-of-normals PoN.vcf -O somatic_raw.vcf
                   </div>
-                  <div className="text-[10px]" style={{ color: '#5c6b7a' }}>
+                  <div className="text-[12px]" style={{ color: '#5c6b7a' }}>
                     ##fileformat=VCFv4.2
                   </div>
-                  <div className="text-[10px] mb-1" style={{ color: '#5c6b7a' }}>
+                  <div className="text-[12px] mb-1" style={{ color: '#5c6b7a' }}>
                     {example.vcfMeta}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t pt-2 mt-1" style={{ borderColor: '#1e2a38' }}>

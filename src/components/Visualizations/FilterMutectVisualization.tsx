@@ -298,10 +298,10 @@ export const FilterMutectVisualization: React.FC<FilterMutectVisualizationProps>
           <div className="text-center shrink-0">
             <p className="text-[11px]" style={{ color: '#9fb0c3' }}>[ 統計演算法：以機率公式為核心的演算法 ]</p>
             <div className="mt-1.5 flex items-center justify-center gap-1.5 flex-wrap">
-              <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wide" style={{ color: '#4da3ff', backgroundColor: 'rgba(77,163,255,0.1)', border: '1px solid rgba(77,163,255,0.35)' }}>
+              <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide" style={{ color: '#ffb84d', backgroundColor: 'rgba(255,184,77,0.1)', border: '1px solid rgba(255,184,77,0.35)' }}>
                 Bayesian Statistical Model
               </span>
-              <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wide" style={{ color: '#ffb84d', backgroundColor: 'rgba(255,184,77,0.1)', border: '1px solid rgba(255,184,77,0.35)' }}>
+              <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide" style={{ color: '#ffb84d', backgroundColor: 'rgba(255,184,77,0.1)', border: '1px solid rgba(255,184,77,0.35)' }}>
                 False Discovery Rate
               </span>
             </div>
@@ -333,7 +333,7 @@ export const FilterMutectVisualization: React.FC<FilterMutectVisualizationProps>
               {done && (
                 <div className="terminal-scan pointer-events-none absolute left-0 right-0 h-8" style={{ background: 'linear-gradient(180deg, transparent, rgba(255,184,77,0.04), rgba(255,184,77,0.15), transparent)' }} />
               )}
-              <div className="font-mono text-[9.5px] leading-[1.95] overflow-x-auto whitespace-nowrap">
+              <div className="font-mono text-[10px] leading-[1.95] overflow-x-auto whitespace-nowrap">
                 <div className="flex gap-1 pr-2" style={{ color: '#5b6b7c' }}>
                   <span style={{ width: 40 }}>#CHROM</span>
                   <span style={{ width: 62 }}>POS</span>

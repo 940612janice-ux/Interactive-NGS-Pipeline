@@ -1,274 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ArrowDown, Download, Settings, Upload } from 'lucide-react';
 
 interface AlignmentVisualizationProps {
   onComplete?: () => void;
-}
-
-const CHROMOSOMES = [
-  { label: '1', size: 248, cen: 0.45 },
-  { label: '2', size: 242, cen: 0.40 },
-  { label: '3', size: 198, cen: 0.47 },
-  { label: '4', size: 190, cen: 0.27 },
-  { label: '5', size: 181, cen: 0.29 },
-  { label: '6', size: 170, cen: 0.35 },
-  { label: '7', size: 159, cen: 0.37 },
-  { label: '8', size: 145, cen: 0.35 },
-  { label: '9', size: 138, cen: 0.36 },
-  { label: '10', size: 133, cen: 0.36 },
-  { label: '11', size: 135, cen: 0.40 },
-  { label: '12', size: 133, cen: 0.39 },
-  { label: '13', size: 115, cen: 0.17 },
-  { label: '14', size: 107, cen: 0.18 },
-  { label: '15', size: 102, cen: 0.19 },
-  { label: '16', size: 90, cen: 0.43 },
-  { label: '17', size: 83, cen: 0.40 },
-  { label: '18', size: 80, cen: 0.30 },
-  { label: '19', size: 59, cen: 0.48 },
-  { label: '20', size: 63, cen: 0.46 },
-  { label: '21', size: 48, cen: 0.25 },
-  { label: '22', size: 51, cen: 0.27 },
-  { label: 'X', size: 156, cen: 0.37 },
-  { label: 'Y', size: 57, cen: 0.40 },
-];
-
-const ROWS = [
-  [0, 1, 2],
-  [3, 4],
-  [5, 6, 7, 8, 9, 10, 11],
-  [12, 13, 14],
-  [15, 16, 17],
-  [18, 19],
-  [20, 21],
-  [22, 23],
-];
-
-// 單色 G-banding：level 0 = 淺色區，1~5 = 由淺到深
-const BAND_COLORS = ['#ffffff', '#c9c9c9', '#8f8f8f', '#565656', '#2c2c2c', '#101010'];
-
-// 每條染色體的 G 帶：[起點比例, 終點比例, 深淺 0~5]，比例為 0（p 端）到 1（q 端）
-const G_BANDS: Record<string, Array<[number, number, number]>> = {
-  '1': [
-    [0.01, 0.03, 2], [0.05, 0.08, 2], [0.09, 0.11, 2], [0.14, 0.17, 4], [0.19, 0.22, 3],
-    [0.24, 0.27, 3], [0.29, 0.32, 2], [0.35, 0.38, 4], [0.40, 0.43, 3],
-    [0.46, 0.53, 5], [0.55, 0.58, 2], [0.60, 0.63, 3], [0.66, 0.70, 3],
-    [0.73, 0.77, 2], [0.80, 0.83, 3], [0.86, 0.90, 2], [0.93, 0.96, 4],
-  ],
-  '2': [
-    [0.02, 0.05, 2], [0.09, 0.12, 4], [0.15, 0.18, 3], [0.21, 0.24, 3], [0.27, 0.30, 2],
-    [0.33, 0.36, 4],
-    [0.43, 0.46, 4], [0.49, 0.52, 4], [0.55, 0.58, 3], [0.61, 0.64, 4],
-    [0.67, 0.70, 4], [0.73, 0.76, 3], [0.79, 0.82, 4], [0.85, 0.88, 4], [0.91, 0.94, 3],
-  ],
-  '3': [
-    [0.03, 0.06, 2], [0.10, 0.14, 2], [0.17, 0.20, 3], [0.23, 0.26, 3], [0.29, 0.32, 2],
-    [0.35, 0.38, 2], [0.41, 0.44, 3],
-    [0.54, 0.57, 3], [0.60, 0.63, 3], [0.66, 0.69, 2], [0.72, 0.75, 3],
-    [0.78, 0.81, 2], [0.84, 0.87, 3], [0.90, 0.93, 2], [0.96, 1.0, 3],
-  ],
-  '4': [
-    [0.02, 0.05, 2], [0.08, 0.11, 3], [0.14, 0.17, 3], [0.20, 0.23, 2],
-    [0.30, 0.33, 4], [0.36, 0.39, 4], [0.42, 0.45, 4], [0.48, 0.51, 3],
-    [0.54, 0.58, 4], [0.61, 0.64, 3], [0.68, 0.71, 4], [0.74, 0.78, 3],
-    [0.81, 0.85, 4], [0.88, 0.92, 3],
-  ],
-  '5': [
-    [0.02, 0.04, 2], [0.08, 0.11, 3], [0.14, 0.17, 2], [0.20, 0.23, 3],
-    [0.33, 0.36, 4], [0.39, 0.42, 3], [0.46, 0.49, 3], [0.52, 0.55, 4],
-    [0.59, 0.62, 3], [0.66, 0.69, 3], [0.73, 0.76, 4], [0.80, 0.83, 3], [0.86, 0.90, 3],
-  ],
-  '6': [
-    [0.02, 0.05, 3], [0.08, 0.11, 2], [0.14, 0.17, 3], [0.20, 0.23, 2], [0.26, 0.30, 3],
-    [0.39, 0.42, 3], [0.45, 0.48, 3], [0.51, 0.55, 3], [0.58, 0.61, 2],
-    [0.65, 0.68, 2], [0.71, 0.75, 2], [0.78, 0.81, 2], [0.85, 0.88, 2],
-  ],
-  '7': [
-    [0.02, 0.05, 3], [0.08, 0.11, 3], [0.14, 0.17, 2], [0.20, 0.23, 3], [0.26, 0.29, 2],
-    [0.32, 0.35, 3],
-    [0.41, 0.44, 3], [0.47, 0.51, 2], [0.54, 0.58, 3], [0.61, 0.64, 2],
-    [0.68, 0.71, 2], [0.74, 0.78, 3], [0.81, 0.85, 2], [0.88, 0.92, 2],
-  ],
-  '8': [
-    [0.02, 0.05, 2], [0.08, 0.11, 3], [0.14, 0.17, 2], [0.20, 0.23, 3], [0.27, 0.30, 2],
-    [0.39, 0.42, 3], [0.45, 0.48, 3], [0.51, 0.55, 3], [0.58, 0.62, 2],
-    [0.65, 0.69, 2], [0.72, 0.76, 3], [0.79, 0.83, 2], [0.86, 0.90, 2],
-  ],
-  '9': [
-    [0.02, 0.05, 2], [0.08, 0.11, 3], [0.14, 0.17, 2], [0.20, 0.23, 3], [0.26, 0.30, 2],
-    [0.37, 0.42, 5], [0.45, 0.48, 3], [0.51, 0.54, 3], [0.58, 0.61, 3],
-    [0.64, 0.68, 2], [0.71, 0.75, 2], [0.78, 0.82, 2], [0.85, 0.89, 2],
-  ],
-  '10': [
-    [0.02, 0.05, 3], [0.08, 0.11, 2], [0.14, 0.17, 3], [0.20, 0.23, 2], [0.27, 0.30, 2],
-    [0.40, 0.43, 3], [0.46, 0.50, 3], [0.53, 0.56, 3], [0.60, 0.63, 3],
-    [0.66, 0.70, 2], [0.73, 0.77, 2], [0.80, 0.84, 2], [0.87, 0.91, 2],
-  ],
-  '11': [
-    [0.02, 0.05, 2], [0.09, 0.12, 3], [0.16, 0.19, 3], [0.23, 0.26, 2], [0.30, 0.33, 3],
-    [0.44, 0.47, 4], [0.50, 0.53, 3], [0.56, 0.59, 3], [0.62, 0.65, 3],
-    [0.68, 0.72, 2], [0.75, 0.78, 3], [0.81, 0.85, 2], [0.88, 0.92, 2],
-  ],
-  '12': [
-    [0.02, 0.04, 2], [0.08, 0.11, 3], [0.15, 0.18, 3], [0.22, 0.25, 2], [0.29, 0.32, 3],
-    [0.43, 0.46, 4], [0.49, 0.52, 3], [0.55, 0.58, 3], [0.61, 0.64, 3],
-    [0.67, 0.70, 2], [0.73, 0.77, 3], [0.80, 0.84, 2], [0.87, 0.91, 2],
-  ],
-  '13': [
-    [0.05, 0.09, 2], [0.13, 0.16, 2],
-    [0.21, 0.25, 3], [0.28, 0.32, 4], [0.36, 0.40, 4], [0.43, 0.47, 3],
-    [0.51, 0.55, 4], [0.59, 0.63, 3], [0.67, 0.71, 3], [0.75, 0.79, 3], [0.83, 0.88, 2],
-  ],
-  '14': [
-    [0.06, 0.10, 2], [0.14, 0.17, 2],
-    [0.22, 0.26, 3], [0.30, 0.34, 4], [0.38, 0.42, 3], [0.46, 0.50, 3],
-    [0.54, 0.58, 3], [0.62, 0.66, 2], [0.70, 0.74, 3], [0.78, 0.82, 2], [0.86, 0.90, 2],
-  ],
-  '15': [
-    [0.06, 0.10, 2], [0.14, 0.18, 2],
-    [0.23, 0.27, 3], [0.31, 0.35, 3], [0.39, 0.43, 3], [0.47, 0.51, 3],
-    [0.55, 0.59, 3], [0.63, 0.67, 2], [0.71, 0.75, 2], [0.79, 0.83, 2], [0.87, 0.91, 2],
-  ],
-  '16': [
-    [0.03, 0.07, 2], [0.11, 0.15, 3], [0.19, 0.23, 3], [0.27, 0.31, 3], [0.35, 0.39, 3],
-    [0.44, 0.47, 5], [0.51, 0.55, 3], [0.59, 0.63, 3], [0.67, 0.71, 2],
-    [0.75, 0.79, 3], [0.83, 0.87, 2], [0.91, 0.95, 2],
-  ],
-  '17': [
-    [0.03, 0.07, 2], [0.11, 0.15, 3], [0.19, 0.23, 2], [0.27, 0.31, 3],
-    [0.44, 0.48, 2], [0.52, 0.56, 3], [0.60, 0.64, 3], [0.68, 0.72, 2],
-    [0.76, 0.80, 2], [0.84, 0.88, 2], [0.92, 0.96, 2],
-  ],
-  '18': [
-    [0.03, 0.07, 2], [0.11, 0.15, 3], [0.19, 0.23, 2], [0.27, 0.30, 3],
-    [0.35, 0.39, 3], [0.43, 0.47, 4], [0.51, 0.55, 4], [0.59, 0.63, 3],
-    [0.67, 0.71, 3], [0.75, 0.79, 3], [0.83, 0.87, 2], [0.91, 0.95, 2],
-  ],
-  '19': [
-    [0.04, 0.08, 2], [0.12, 0.16, 2], [0.20, 0.24, 2], [0.28, 0.32, 2], [0.36, 0.40, 2],
-    [0.56, 0.60, 3], [0.64, 0.68, 2], [0.72, 0.76, 3], [0.80, 0.84, 2], [0.88, 0.92, 2],
-  ],
-  '20': [
-    [0.04, 0.08, 2], [0.12, 0.16, 2], [0.20, 0.24, 3], [0.28, 0.32, 2], [0.36, 0.40, 2],
-    [0.54, 0.58, 3], [0.62, 0.66, 3], [0.70, 0.74, 3], [0.78, 0.82, 2], [0.86, 0.90, 3],
-  ],
-  '21': [
-    [0.08, 0.13, 2], [0.19, 0.24, 2],
-    [0.30, 0.36, 3], [0.42, 0.47, 3], [0.53, 0.59, 3], [0.65, 0.71, 3], [0.77, 0.83, 3],
-  ],
-  '22': [
-    [0.09, 0.14, 2], [0.20, 0.26, 2],
-    [0.32, 0.37, 3], [0.43, 0.48, 3], [0.53, 0.58, 3], [0.64, 0.69, 3], [0.74, 0.79, 3],
-  ],
-  'X': [
-    [0.02, 0.05, 3], [0.08, 0.11, 2], [0.14, 0.17, 3], [0.20, 0.23, 2], [0.26, 0.29, 3],
-    [0.32, 0.36, 2],
-    [0.41, 0.44, 3], [0.47, 0.50, 3], [0.53, 0.57, 3], [0.60, 0.63, 3],
-    [0.66, 0.70, 3], [0.73, 0.77, 3], [0.80, 0.84, 2], [0.87, 0.91, 2],
-  ],
-  'Y': [
-    [0.08, 0.14, 2], [0.20, 0.26, 2], [0.32, 0.38, 2],
-    [0.46, 0.52, 3], [0.58, 0.64, 3], [0.70, 0.76, 3], [0.82, 0.88, 3],
-  ],
-};
-
-function createKaryotypeSVG(): string {
-  const lerp = (a: number, b: number, f: number) => a + (b - a) * f;
-
-  function halfWidth(t: number, r: number) {
-    if (t < r) {
-      if (t < r * 0.22) return lerp(0.05, 1, t / (r * 0.22));
-      if (t < r * 0.80) return 1;
-      return lerp(1, 0.16, (t - r * 0.80) / (r * 0.20));
-    }
-    const u = (t - r) / (1 - r);
-    if (u < 0.20) return lerp(0.16, 1, u / 0.20);
-    if (u < 0.72) return 1;
-    return lerp(1, 0.05, (u - 0.72) / 0.28);
-  }
-
-  function chromHeight(size: number) {
-    return 16 + (size / 248) * 88;
-  }
-
-  function chromPath(cx: number, cy: number, h: number, w: number, r: number) {
-    const N = 36;
-    const top = cy - h / 2;
-    let d = `M ${cx.toFixed(1)} ${top.toFixed(1)}`;
-    for (let k = 1; k <= N; k++) {
-      const t = k / N;
-      d += ` L ${(cx - halfWidth(t, r) * w).toFixed(1)} ${(top + t * h).toFixed(1)}`;
-    }
-    for (let k = N - 1; k >= 0; k--) {
-      const t = k / N;
-      d += ` L ${(cx + halfWidth(t, r) * w).toFixed(1)} ${(top + t * h).toFixed(1)}`;
-    }
-    return d + ' Z';
-  }
-
-  // 單色 G-banding：以 clipPath 把帶紋剪進染色體輪廓內
-  function chromBands(cx: number, cy: number, h: number, w: number, label: string) {
-    const top = cy - h / 2;
-    const bands = G_BANDS[label] || [];
-    return bands.map(([start, end, level]) => {
-      if (level <= 0) return '';
-      const y1 = top + start * h;
-      const y2 = top + end * h;
-      const bw = w * 3.4;
-      return `<rect x="${(cx - bw / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0.4, y2 - y1).toFixed(1)}" fill="${BAND_COLORS[level]}"/>`;
-    }).join('');
-  }
-
-  const W = 800;
-  const CELL_W = 110;
-  const W_MAX = 9;
-
-  const rowLayout: Array<{ row: number[]; maxH: number; y: number }> = [];
-  let yCursor = 35;
-  ROWS.forEach((row) => {
-    const maxH = Math.max(...row.map((i) => chromHeight(CHROMOSOMES[i].size)));
-    rowLayout.push({ row, maxH, y: yCursor });
-    yCursor += maxH + 30;
-  });
-  const H = yCursor + 30;
-
-  let defs = '';
-  let shapes = '';
-  let labels = '';
-
-  rowLayout.forEach(({ row, maxH, y }) => {
-    const n = row.length;
-    const totalW = n * CELL_W;
-    const xStart = (W - totalW) / 2 + CELL_W / 2;
-    row.forEach((idx, i) => {
-      const chrom = CHROMOSOMES[idx];
-      const cx = xStart + i * CELL_W;
-      const cy = y + maxH / 2;
-      const h = chromHeight(chrom.size);
-      const isSex = idx >= 22;
-      const gap = 26;
-      const rods = isSex ? [0] : [-gap, gap];
-
-      rods.forEach((ox, rodIdx) => {
-        const rodCx = cx + ox;
-        const clipId = `gband-${idx}-${rodIdx}`;
-        const pathD = chromPath(rodCx, cy, h, W_MAX, chrom.cen);
-        defs += `<clipPath id="${clipId}"><path d="${pathD}"/></clipPath>`;
-        shapes += `<path d="${pathD}" fill="#e9e9e9" stroke="#7d7d7d" stroke-width="0.8" stroke-linejoin="round"/>`;
-        shapes += `<g clip-path="url(#${clipId})">${chromBands(rodCx, cy, h, W_MAX, chrom.label)}</g>`;
-      });
-
-      labels += `<text x="${cx.toFixed(1)}" y="${(y + maxH + 20).toFixed(1)}" text-anchor="middle" font-size="${isSex ? 13 : 12}" font-weight="700" fill="#c9ced6">${chrom.label}</text>`;
-    });
-  });
-
-  return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="人類男性正常核型，46,XY" style="width:100%;height:auto;">
-      <rect x="0" y="0" width="${W}" height="${H}" fill="#0a0e17"/>
-      <text x="${W / 2}" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#e6e9f2">人類男性正常核型 · 46,XY（參考基因體 hg38 / GRCh38）</text>
-      ${defs}
-      ${shapes}
-      ${labels}
-    </svg>
-  `;
 }
 
 const REF_BASES = 'TGAATTTTGGATTACTAAGGAATTTACAGTACAAAAATGTACTTGTTAACACAGTGACAT';
@@ -278,6 +12,12 @@ const BASE_COLOR_MAP: Record<string, string> = { A: '#ff6b6b', C: '#ffa500', G: 
 // 行首固定欄位（read 名稱 / Reference 標籤）寬度：對應 Tailwind w-36，Reference 與 Reads 共用，
 // 確保序列起點 X 座標完全一致（標籤 pr-4 的內縮已包含在 144px 內）
 const GUTTER_W = 144;
+// 每個鹼基格子的寬度（單位：字元寬 ch）。Reference 與 Read 共用，改這個等於同時調整間距；
+// 若想只調一邊可分別改，但會造成錯位
+const CELL_CH = 2;
+// 鹼基格間距：必須與 index.css 內 .ref-bases 的 gap 一致（Reference 是 flex gap: 2px），
+// read 要沿用相同推進法（每格 2ch + gap），否則越往右越對不齊
+const BASE_GAP_PX = 2;
 
 // 測量等寬字型（font-mono）的單一字元寬度：落點欄位換算的基準
 let cachedCharWidth: number | null = null;
@@ -360,7 +100,7 @@ export const AlignmentVisualization: React.FC<AlignmentVisualizationProps> = () 
     basesEl.style.letterSpacing = 'normal';
     REF_BASES.split('').forEach((base, i) => {
       const baseEl = document.createElement('span');
-      baseEl.className = `ref-base base-${base} w-[1ch] text-center font-bold`;
+      baseEl.className = `ref-base base-${base} w-[${CELL_CH}ch] text-center font-bold`;
       baseEl.textContent = base;
       baseEl.style.color = BASE_COLOR_MAP[base] || '#cbd5e1';
       (baseEl as HTMLElement).dataset.pos = String(i);
@@ -404,7 +144,7 @@ export const AlignmentVisualization: React.FC<AlignmentVisualizationProps> = () 
       row.className = 'flex items-center';
 
       const label = document.createElement('span');
-      label.className = 'w-36 shrink-0 text-right pr-4 text-xs text-neutral-500 select-none';
+      label.className = 'w-36 shrink-0 text-right pr-10 text-xs text-neutral-500 select-none';
       label.style.width = `${GUTTER_W}px`;
       label.textContent = `${read.id} (${read.matchCount}/${read.seq.length})`;
       row.appendChild(label);
@@ -412,11 +152,13 @@ export const AlignmentVisualization: React.FC<AlignmentVisualizationProps> = () 
       const bases = document.createElement('div');
       bases.className = 'flex whitespace-pre tracking-normal shrink-0';
       bases.style.letterSpacing = 'normal';
-      // 以 ch 單位精確推開 offset 個字元，讓真實序列起點與 Reference 相同欄位對齊
-      bases.style.paddingLeft = `${startPos}ch`;
+      // 與 Reference 相同的推進法：每格寬 2ch（w-[2ch]）＋ flex gap 2px，
+      // 起點 offset 也是一格一格的累進（calc 混合 ch 與 px），確保越往右越不跑位
+      bases.style.gap = `${BASE_GAP_PX}px`;
+      bases.style.paddingLeft = `calc(${startPos * CELL_CH}ch + ${startPos * BASE_GAP_PX}px)`;
       read.seq.split('').forEach((base) => {
         const span = document.createElement('span');
-        span.className = 'w-[1ch] text-center font-bold';
+        span.className = `w-[${CELL_CH}ch] text-center font-bold`;
         span.style.color = BASE_COLOR_MAP[base] || '#cbd5e1';
         span.textContent = base;
         bases.appendChild(span);
@@ -458,8 +200,9 @@ export const AlignmentVisualization: React.FC<AlignmentVisualizationProps> = () 
     if (!basesEl) return 0;
     const basesRect = basesEl.getBoundingClientRect();
     const x = clientX - basesRect.left + (basesEl.scrollLeft || 0);
-    const charW = getCharWidth();
-    const col = Math.round((x - charW / 2) / charW);
+    // 與 Reference 推進法一致：每格 = 格子寬(2ch) + gap(2px)
+    const cellW = getCharWidth() * CELL_CH + BASE_GAP_PX;
+    const col = Math.floor(x / cellW);
     return Math.max(0, Math.min(REF_LENGTH - 1, col));
   };
 
@@ -496,8 +239,8 @@ export const AlignmentVisualization: React.FC<AlignmentVisualizationProps> = () 
       readEl.style.opacity = read.aligned ? '0.3' : '1';
       readEl.style.cursor = read.aligned ? 'default' : 'grab';
       readEl.innerHTML = `
-        <span class="read-id text-[14px] font-bold" style="color:#9fb0c3">${read.id}</span>
-        <span class="read-seq text-[16px] font-mono tracking-normal" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:normal">${read.seq.split('').map((b) => `<span style="color:${BASE_COLOR_MAP[b] || '#ccc'}">${b}</span>`).join('')}</span>
+        <span class="read-id text-[12px] font-bold" style="color:#9fb0c3">${read.id}</span>
+        <span class="read-seq text-[14px] font-mono tracking-normal" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:normal">${read.seq.split('').map((b) => `<span style="color:${BASE_COLOR_MAP[b] || '#ccc'}">${b}</span>`).join('')}</span>
       `;
       readEl.addEventListener('dragstart', (ev) => {
         if (ev.dataTransfer) ev.dataTransfer.setData('text/plain', idx.toString());
@@ -522,14 +265,55 @@ export const AlignmentVisualization: React.FC<AlignmentVisualizationProps> = () 
 
   return (
     <div className="alignment-visual grid gap-6 h-[calc(100vh-13rem)] min-h-[600px]" style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)' }}>
-      {/* Left: Karyotype */}
+      {/* Left: 檔案處理流程 */}
       <div className="alignment-left flex flex-col gap-4">
         <div className="fastqc-panel flex-1 flex flex-col rounded-2xl border p-5" style={{ backgroundColor: '#2c3a4b', borderColor: '#3b4b5f' }}>
           <div className="fastqc-panel-header flex items-center justify-between mb-3 pb-2 border-b" style={{ borderColor: '#3b4b5f' }}>
-            <h3 className="text-[16px] font-bold" style={{ color: '#4da3ff' }}>人類參考基因體 hg38</h3>
-            <span className="fastqc-badge text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: '#9fb0c3', backgroundColor: '#0f1520' }}>23 對染色體</span>
+            <h3 className="text-[16px] font-bold" style={{ color: '#4da3ff' }}>檔案處理</h3>
+            <span className="fastqc-badge text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: '#9fb0c3', backgroundColor: '#0f1520' }}>File Processing</span>
           </div>
-          <div className="karyotype-wrap flex-1 overflow-auto flex items-center" dangerouslySetInnerHTML={{ __html: createKaryotypeSVG() }} />
+          <div className="processing-flow flex-1 flex flex-col justify-center gap-2 min-h-0">
+            {/* Input */}
+            <div className="flow-card rounded-xl border p-4" style={{ backgroundColor: '#0b1220', borderColor: '#1e2a38' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Download size={18} style={{ color: '#4da3ff' }} />
+                <span className="text-[14px] font-bold" style={{ color: '#e6e9f2' }}>輸入 (Input)</span>
+              </div>
+              <ul className="flow-list text-[12px] space-y-1 leading-relaxed" style={{ color: '#9fb0c3' }}>
+                <li><span className="font-bold" style={{ color: '#c9ced6' }}>檔案格式：</span>Clean FASTQ</li>
+                <li><span className="font-bold" style={{ color: '#c9ced6' }}>內容：</span>無座標、已過濾低品質的 DNA 定序短片段</li>
+              </ul>
+            </div>
+            <div className="flow-arrow flex justify-center" style={{ color: '#4da3ff' }}>
+              <ArrowDown size={18} strokeWidth={2.5} />
+            </div>
+            {/* Processing */}
+            <div className="flow-card rounded-xl border p-4" style={{ backgroundColor: '#0b1220', borderColor: '#1e2a38' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Settings size={18} style={{ color: '#4da3ff' }} />
+                <span className="text-[14px] font-bold" style={{ color: '#e6e9f2' }}>處理 (Processing)</span>
+              </div>
+              <ul className="flow-list text-[12px] space-y-1 leading-relaxed" style={{ color: '#9fb0c3' }}>
+                <li><span className="font-bold" style={{ color: '#c9ced6' }}>工具：</span>BWA-MEM</li>
+                <li><span className="font-bold" style={{ color: '#c9ced6' }}>動作：</span>將 reads 與 hg38 參考基因體對齊 (Align)，尋找座標</li>
+              </ul>
+            </div>
+            <div className="flow-arrow flex justify-center" style={{ color: '#4da3ff' }}>
+              <ArrowDown size={18} strokeWidth={2.5} />
+            </div>
+            {/* Output */}
+            <div className="flow-card rounded-xl border p-4" style={{ backgroundColor: '#0b1220', borderColor: '#1e2a38' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Upload size={18} style={{ color: '#4da3ff' }} />
+                <span className="text-[14px] font-bold" style={{ color: '#e6e9f2' }}>輸出 (Output)</span>
+              </div>
+              <ul className="flow-list text-[12px] space-y-1 leading-relaxed" style={{ color: '#9fb0c3' }}>
+                <li><span className="font-bold" style={{ color: '#c9ced6' }}>原始輸出：</span>SAM 檔 (檔案體積太大，直接轉成 BAM 檔)</li>
+                <li><span className="font-bold" style={{ color: '#c9ced6' }}>檔案格式：</span>Raw BAM</li>
+                <li><span className="font-bold" style={{ color: '#c9ced6' }}>內容：</span>包含座標與比對品質資訊的二進位檔案</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -545,7 +329,7 @@ export const AlignmentVisualization: React.FC<AlignmentVisualizationProps> = () 
             {/* 參考序列（hg38 chr1: 10,000,001–10,000,060）：拉長成主要拖放區 */}
             <div
               ref={refSeqRef}
-              className="ref-sequence font-mono text-sm bg-[#080c14] border rounded-lg p-2 overflow-x-auto cursor-copy flex-1 min-h-[130px]"
+              className="ref-sequence font-mono text-xs bg-[#080c14] border rounded-lg p-2 overflow-x-auto cursor-copy flex-1 min-h-[130px]"
               style={{ borderColor: '#1e2a38', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}

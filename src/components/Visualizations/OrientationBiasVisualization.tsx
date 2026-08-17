@@ -7,30 +7,10 @@ interface OrientationBiasVisualizationProps {
 type RunStatus = 'idle' | 'running' | 'done';
 
 /* ===== 左側：DNA 對齊視圖資料 ===== */
-const RUNG_TOPS = [8, 26, 44, 62, 80, 98, 116, 134, 152, 170, 188, 206, 224];
-const RUNG_BASES: Record<number, string> = { 8: 'A', 26: 'C', 44: 'G', 62: 'T', 80: 'A', 98: 'G', 116: 'G', 134: 'C', 152: 'A', 170: 'C', 188: 'G', 206: 'T', 224: 'A' };
+const RUNG_TOPS = [8, 30, 52, 74, 96, 118, 140, 162, 184, 206, 228, 250, 272];
+const RUNG_BASES: Record<number, string> = { 8: 'A', 30: 'C', 52: 'G', 74: 'T', 96: 'A', 118: 'G', 140: 'G', 162: 'C', 184: 'A', 206: 'C', 228: 'G', 250: 'T', 272: 'A' };
 const COMPLEMENT: Record<string, string> = { A: 'T', T: 'A', C: 'G', G: 'C' };
-const VARIANT_Y = 116;
-
-interface ReadLine {
-  side: 'l' | 'r';
-  top: number;
-  width: number;
-  artifact: boolean;
-}
-
-const READS: ReadLine[] = [
-  { side: 'l', top: 20, width: 36, artifact: false },
-  { side: 'l', top: 50, width: 32, artifact: false },
-  { side: 'l', top: 112, width: 36, artifact: true },
-  { side: 'l', top: 142, width: 34, artifact: false },
-  { side: 'l', top: 182, width: 38, artifact: false },
-  { side: 'r', top: 32, width: 36, artifact: false },
-  { side: 'r', top: 66, width: 32, artifact: false },
-  { side: 'r', top: 148, width: 36, artifact: false },
-  { side: 'r', top: 188, width: 34, artifact: false },
-  { side: 'r', top: 212, width: 38, artifact: false },
-];
+const VARIANT_Y = 140;
 
 const PanelHeader: React.FC<{ label: string; zh: string; color: string }> = ({ label, zh, color }) => (
   <div className="flex items-center justify-between px-1">
@@ -41,42 +21,10 @@ const PanelHeader: React.FC<{ label: string; zh: string; color: string }> = ({ l
   </div>
 );
 
-const ReadBar: React.FC<{ r: ReadLine }> = ({ r }) => {
-  const isLeft = r.side === 'l';
-  const fill = r.artifact
-    ? 'linear-gradient(90deg, rgba(255,107,107,0.9), rgba(255,107,107,0.4))'
-    : 'linear-gradient(90deg, rgba(77,163,255,0.85), rgba(77,163,255,0.35))';
-  const glow = r.artifact ? 'rgba(255,107,107,0.55)' : 'rgba(77,163,255,0.4)';
-  return (
-    <div
-      className="ob-read absolute flex items-center rounded-[3px]"
-      style={{
-        top: r.top,
-        height: 9,
-        width: `${r.width}%`,
-        left: isLeft ? '10%' : undefined,
-        right: isLeft ? undefined : '10%',
-        background: fill,
-        boxShadow: `0 0 8px ${glow}`,
-        animationDelay: `${(r.top % 20) * 0.06}s`,
-      }}
-    >
-      {r.artifact && (
-        <span className="absolute font-mono text-[8px] font-bold" style={{ color: '#fff', ...(isLeft ? { right: 2 } : { left: 2 }) }}>
-          T
-        </span>
-      )}
-      <span className="absolute text-[9px] leading-none" style={{ color: 'rgba(232,238,245,0.85)', ...(isLeft ? { left: 1 } : { right: 1 }) }}>
-        {isLeft ? '→' : '←'}
-      </span>
-    </div>
-  );
-};
-
 export const OrientationBiasVisualization: React.FC<OrientationBiasVisualizationProps> = ({ onComplete }) => {
   const [status, setStatus] = useState<RunStatus>('idle');
   const [threshold, setThreshold] = useState(0.4);
-  const [phaseLabel, setPhaseLabel] = useState('等待啟動 — 準備以經驗貝氏模型學習 read orientation。');
+  const [phaseLabel, setPhaseLabel] = useState('過濾 FFPE 組織保存 或 DNA 萃取過程中氧化 造成的「假突變（Artifacts）」!');
   const timersRef = useRef<number[]>([]);
 
   const analyzed = status !== 'idle';
@@ -108,7 +56,8 @@ export const OrientationBiasVisualization: React.FC<OrientationBiasVisualization
   const f2r1Count = analyzed ? '7' : '118';
 
   return (
-    <div className="orientation-bias-visual flex flex-col gap-3 h-[calc(100vh-13rem)] min-h-[640px]">
+    <div className="orientation-bias-visual flex flex-col gap-4">
+      <div className="flex flex-col gap-3 h-[calc(100vh-13rem)] min-h-[640px]">
       {/* ===== 頂部標題列 ===== */}
       <div
         className="relative overflow-hidden rounded-2xl border px-5 py-3.5 flex items-center justify-between shrink-0"
@@ -146,35 +95,30 @@ export const OrientationBiasVisualization: React.FC<OrientationBiasVisualization
             <div
               className="relative rounded-xl"
               style={{
-                height: 250,
+                height: 300,
                 backgroundColor: '#0f1520',
                 border: '1px solid #1e2a38',
                 background: 'radial-gradient(ellipse at 50% 45%, rgba(255,184,77,0.10), rgba(15,21,32,0) 65%)',
               }}
             >
-              <div className="absolute top-3 bottom-3 w-[3px] rounded-full" style={{ left: '46%', background: 'linear-gradient(180deg, rgba(255,184,77,0.95), rgba(255,184,77,0.25))' }} />
-              <div className="absolute top-3 bottom-3 w-[3px] rounded-full" style={{ right: '46%', background: 'linear-gradient(180deg, rgba(255,184,77,0.95), rgba(255,184,77,0.25))' }} />
+              <div className="absolute top-3 bottom-3 w-[4px] rounded-full" style={{ left: '44%', background: 'linear-gradient(180deg, rgba(255,184,77,0.95), rgba(255,184,77,0.25))' }} />
+              <div className="absolute top-3 bottom-3 w-[4px] rounded-full" style={{ right: '44%', background: 'linear-gradient(180deg, rgba(255,184,77,0.95), rgba(255,184,77,0.25))' }} />
               {RUNG_TOPS.map((y, i) => {
                 const b1 = RUNG_BASES[y];
                 const b2 = COMPLEMENT[b1];
                 const variant = y === VARIANT_Y;
                 return (
-                  <div key={y} className="absolute left-0 right-0 flex items-center justify-center" style={{ top: y, height: 9, transform: `translateX(${i % 2 === 0 ? 2 : -2}px)` }}>
-                    <span className="absolute" style={{ left: '46%', width: '8%', height: 1.5, background: variant ? 'rgba(255,107,107,0.9)' : 'rgba(255,184,77,0.65)' }} />
-                    <span className="absolute font-mono text-[7px]" style={{ left: '44%', color: variant ? '#ff6b6b' : '#ffb84d' }}>{variant ? 'T' : b1}</span>
-                    <span className="absolute font-mono text-[7px]" style={{ right: '44%', color: '#ffb84d', opacity: 0.8 }}>{b2}</span>
+                  <div key={y} className="absolute left-0 right-0 flex items-center justify-center" style={{ top: y - 7, height: 14, transform: `translateX(${i % 2 === 0 ? 3 : -3}px)` }}>
+                    <span className="absolute" style={{ left: '45%', width: '10%', height: 2, background: variant ? 'rgba(255,107,107,0.9)' : 'rgba(255,184,77,0.65)' }} />
+                    <span className="absolute font-mono text-[15px] font-bold" style={{ left: '42%', color: variant ? '#ff6b6b' : '#ffb84d' }}>{variant ? 'T' : b1}</span>
+                    <span className="absolute font-mono text-[15px] font-bold" style={{ right: '42%', color: '#ffb84d', opacity: 0.8 }}>{b2}</span>
                   </div>
                 );
               })}
-              {READS.map((r, i) => (
-                <ReadBar key={i} r={r} />
-              ))}
               <div
                 className="ob-ring-pulse absolute flex items-center justify-center rounded-full font-mono font-bold"
-                style={{ left: '50%', top: VARIANT_Y, width: 26, height: 26, transform: 'translate(-50%, -50%)', border: '2px solid #ffb84d', color: '#ffb84d', backgroundColor: 'rgba(255,184,77,0.14)', fontSize: 9 }}
-              >
-                G&gt;T
-              </div>
+                style={{ left: '50%', top: VARIANT_Y, width: 42, height: 42, transform: 'translate(-50%, -50%)', border: '2.5px solid #ffb84d', backgroundColor: 'rgba(255,184,77,0.14)' }}
+              ></div>
               <div className="absolute left-2 top-1.5 text-[8px] font-bold tracking-wider" style={{ color: 'rgba(255,184,77,0.75)' }}>5′ — REF STRAND</div>
             </div>
             <div className="flex items-center justify-center">
@@ -183,8 +127,6 @@ export const OrientationBiasVisualization: React.FC<OrientationBiasVisualization
               </span>
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-[9px] px-1">
-              <span className="flex items-center gap-1" style={{ color: '#4da3ff' }}><span className="inline-block w-3 h-[5px] rounded-sm" style={{ backgroundColor: 'rgba(77,163,255,0.8)' }} /> F1R2 正鏈 reads</span>
-              <span className="flex items-center gap-1" style={{ color: '#ff6b6b' }}><span className="inline-block w-3 h-[5px] rounded-sm" style={{ backgroundColor: 'rgba(255,107,107,0.85)' }} /> 帶變異 reads (G&gt;T)</span>
               <span className="flex items-center gap-1" style={{ color: '#ffb84d' }}><span className="inline-block w-2 h-2 rounded-full border-2" style={{ borderColor: '#ffb84d' }} /> 疑慮突變</span>
             </div>
           </div>
@@ -195,7 +137,7 @@ export const OrientationBiasVisualization: React.FC<OrientationBiasVisualization
           <PanelHeader label="BIAS MODEL & ALGORITHM" zh="統計模型與鏈偏好分析" color="#ffb84d" />
           <div className="text-center shrink-0">
             <p className="text-[11px]" style={{ color: '#9fb0c3' }}>[ 統計演算法：經驗貝氏模型（Empirical Bayes Orientation Model）]</p>
-            <span className="mt-1.5 inline-block text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wide" style={{ color: '#ffb84d', backgroundColor: 'rgba(255,184,77,0.1)', border: '1px solid rgba(255,184,77,0.35)' }}>
+            <span className="mt-1.5 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide" style={{ color: '#ffb84d', backgroundColor: 'rgba(255,184,77,0.1)', border: '1px solid rgba(255,184,77,0.35)' }}>
               Learned Read Orientation Model
             </span>
           </div>
@@ -336,6 +278,69 @@ export const OrientationBiasVisualization: React.FC<OrientationBiasVisualization
         <span className="text-[11px]" style={{ color: '#9fb0c3' }}>
           按下按鈕，學習 read orientation 模型並剔除 FFPE / 氧化損傷造成的假突變
         </span>
+      </div>
+      </div>
+
+      {/* ===== 學習重點 ===== */}
+      <div className="rounded-2xl border p-5 shrink-0" style={{ backgroundColor: '#1b2430', borderColor: '#2c3a4b' }}>
+        <div className="flex items-center gap-2 mb-4">
+          <span
+            className="flex items-center justify-center w-6 h-6 rounded-md text-[12px] font-bold shrink-0"
+            style={{ color: '#0f1520', background: 'linear-gradient(135deg,#3f8cff,#2563eb)', boxShadow: '0 0 10px rgba(59,130,246,0.45)' }}
+          >
+            ◆
+          </span>
+          <span className="text-[14px] font-bold tracking-wide" style={{ color: '#ffb84d' }}>學習重點</span>
+          <span className="text-[11px]" style={{ color: '#9fb0c3' }}>Read Orientation Bias — 單鏈方向性假突變的識別與判讀</span>
+          <span className="ml-auto text-[9px] font-mono px-2 py-0.5 rounded-full" style={{ color: '#9fb0c3', backgroundColor: '#0f1520', border: '1px solid #2c3a4b' }}>KEY POINTS</span>
+        </div>
+
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))' }}>
+          {/* 重點 1 */}
+          <div className="rounded-xl border p-4" style={{ backgroundColor: '#0f1520', borderColor: '#1e2a38' }}>
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold shrink-0" style={{ color: '#0f1520', background: '#ffb84d' }}>1</span>
+              <span className="text-[12px] font-bold" style={{ color: '#e8eef5' }}>識別 DNA 損傷類型與疑慮突變</span>
+            </div>
+            <p className="text-[11px] mb-2" style={{ color: '#c6d3e3' }}>常見損傷型態：</p>
+            <ul className="space-y-1.5 text-[11px] leading-relaxed list-none m-0 p-0">
+              <li className="pl-4 relative">
+                <span className="absolute left-0 top-[10px] w-1 h-1 rounded-full" style={{ background: '#ff6b6b', boxShadow: '0 0 6px #ff6b6b' }} />
+                <span style={{ color: '#c6d3e3' }}>癌症臨床最常見的 <span className="font-bold" style={{ color: '#ffb84d' }}>FFPE 檢體</span> 容易發生胞嘧啶脫氨（<span className="font-mono font-bold" style={{ color: '#ff6b6b' }}>C&gt;T 變異</span>）。</span>
+              </li>
+              <li className="pl-4 relative">
+                <span className="absolute left-0 top-[10px] w-1 h-1 rounded-full" style={{ background: '#ff6b6b', boxShadow: '0 0 6px #ff6b6b' }} />
+                <span style={{ color: '#c6d3e3' }}>DNA 萃取/庫建過程中的氧化反應則易導致 <span className="font-bold" style={{ color: '#ffb84d' }}>8-oxoguanine 損傷</span>（<span className="font-mono font-bold" style={{ color: '#ff6b6b' }}>G&gt;T 變異</span>）。</span>
+              </li>
+              <li className="pl-4 relative">
+                <span className="absolute left-0 top-[10px] w-1 h-1 rounded-full" style={{ background: '#ffb84d', boxShadow: '0 0 6px #ffb84d' }} />
+                <span style={{ color: '#c6d3e3' }}>機制問題：這些損傷通常只會發生在 DNA 的 <span className="font-bold" style={{ color: '#e8eef5' }}>其中一條單鏈</span> 上。</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* 重點 2 */}
+          <div className="rounded-xl border p-4" style={{ backgroundColor: '#0f1520', borderColor: '#1e2a38' }}>
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold shrink-0" style={{ color: '#0f1520', background: '#4da3ff' }}>2</span>
+              <span className="text-[12px] font-bold" style={{ color: '#e8eef5' }}>計算正反鏈 Reads 分布（Strand Bias Analysis）</span>
+            </div>
+            <ul className="space-y-1.5 text-[11px] leading-relaxed list-none m-0 p-0">
+              <li className="pl-4 relative">
+                <span className="absolute left-0 top-[10px] w-1 h-1 rounded-full" style={{ background: '#4da3ff', boxShadow: '0 0 6px #4da3ff' }} />
+                <span style={{ color: '#c6d3e3' }}><span className="font-bold" style={{ color: '#e8eef5' }}>雙鏈比對</span>：檢測工具會統計該突變在 <span className="font-mono font-bold" style={{ color: '#4da3ff' }}>F1R2（正鏈）</span> 與 <span className="font-mono font-bold" style={{ color: '#4da3ff' }}>F2R1（反鏈）</span> 兩種方向 Reads 中的出現次數。</span>
+              </li>
+              <li className="pl-4 relative">
+                <span className="absolute left-0 top-[10px] w-1 h-1 rounded-full" style={{ background: '#4cc38a', boxShadow: '0 0 6px #4cc38a' }} />
+                <span style={{ color: '#c6d3e3' }}><span className="font-bold" style={{ color: '#4cc38a' }}>真實體細胞突變</span>：DNA 在複製時兩條鏈都會帶有突變，因此正鏈與反鏈 Reads 數會趨於平衡。</span>
+              </li>
+              <li className="pl-4 relative">
+                <span className="absolute left-0 top-[10px] w-1 h-1 rounded-full" style={{ background: '#ff6b6b', boxShadow: '0 0 6px #ff6b6b' }} />
+                <span style={{ color: '#c6d3e3' }}><span className="font-bold" style={{ color: '#ff6b6b' }}>損傷假突變（Artifact）</span>：突變訊號會極度偏向某一單鏈（例如幾乎只出現在 F1R2 正鏈，反鏈為 0）。</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Lightbulb } from 'lucide-react';
 import { SAMPLES } from '../../data/workflow';
 import { BASE_COLORS } from '../../hooks/useUtils';
 
@@ -17,17 +19,13 @@ export const DemultiplexingVisualization: React.FC<DemultiplexingVisualizationPr
   useEffect(() => {
     const reads = [
       { seq: 'ATCACG', match: 'S001', mm: 0 },
-      { seq: 'CGATGT', match: 'S002', mm: 0 },
-      { seq: 'TTAGGC', match: 'S003', mm: 0 },
-      { seq: 'TGACCA', match: 'S004', mm: 0 },
-      { seq: 'ATCACG', match: 'S001', mm: 0 },
-      { seq: 'CGATGT', match: 'S002', mm: 0 },
       { seq: 'ATCACC', match: 'S001', mm: 1 },
+      { seq: 'CGATGT', match: 'S002', mm: 0 },
       { seq: 'CGATGA', match: 'S002', mm: 1 },
       { seq: 'TTAGGC', match: 'S003', mm: 0 },
+      { seq: 'TTAGGC', match: 'S003', mm: 0 },
       { seq: 'TGACCA', match: 'S004', mm: 0 },
-      { seq: 'ATCACG', match: 'S001', mm: 0 },
-      { seq: 'CGATGT', match: 'S002', mm: 0 },
+      { seq: 'TGACCA', match: 'S004', mm: 0 },
     ];
 
     const items = reads.map((read, i) => ({
@@ -60,7 +58,7 @@ export const DemultiplexingVisualization: React.FC<DemultiplexingVisualizationPr
       setBinCounts(prev => ({ ...prev, [sampleId]: (prev[sampleId] || 0) + 1 }));
       const newCount = sortedCount + 1;
       setSortedCount(newCount);
-      if (newCount === 12) {
+      if (newCount === 8) {
         setTimeout(() => setGameComplete(true), 500);
       }
     }
@@ -70,11 +68,12 @@ export const DemultiplexingVisualization: React.FC<DemultiplexingVisualizationPr
     onComplete?.();
   };
 
-  const totalItems = 12;
+  const totalItems = 8;
   const progress = (sortedCount / totalItems) * 100;
 
   return (
-    <div className="demultiplexing-visual grid gap-6 h-[calc(100vh-13rem)] min-h-[600px]" style={{ gridTemplateColumns: '1fr 1fr' }}>
+    <div className="demultiplexing-visual flex flex-col gap-4 h-[calc(100vh-13rem)] min-h-[600px]">
+      <div className="grid gap-6 flex-1 min-h-0" style={{ gridTemplateColumns: '1fr 1fr' }}>
       {/* Signal Panel - Index Decoding */}
       <div className="signal-panel flex flex-col overflow-hidden rounded-2xl border p-5" style={{ backgroundColor: '#2c3a4b', borderColor: '#3b4b5f' }}>
         <div className="signal-header flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: '#3b4b5f' }}>
@@ -226,6 +225,46 @@ export const DemultiplexingVisualization: React.FC<DemultiplexingVisualizationPr
           )}
         </div>
       </div>
+      </div>
+
+      {/* 💡 初學者筆記：為何 index 不完全配對仍可歸類 */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+        className="rounded-2xl border p-4 shrink-0"
+        style={{ backgroundColor: '#151b28', borderColor: 'rgba(255,213,74,0.35)' }}
+      >
+        <div className="flex items-center gap-2 mb-2.5">
+          <Lightbulb size={16} style={{ color: '#ffd54a' }} />
+          <span className="text-[13px] font-bold" style={{ color: '#ffd54a' }}>
+            💡 初學者筆記 — Mismatch 顯示意義、成因與解決方式
+          </span>
+        </div>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-start gap-2">
+            <ArrowRight size={13} className="mt-0.5 shrink-0" style={{ color: '#4cc38a' }} />
+            <p className="text-[12px] leading-relaxed" style={{ color: '#c6d3e3' }}>
+              <span style={{ color: '#c6d3e3', fontWeight: 700 }}>Mismatch 顯示意義：</span>
+              真實數據的處理不會標記，提醒就算未完全配對，也可以正常分類。
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <ArrowRight size={13} className="mt-0.5 shrink-0" style={{ color: '#4cc38a' }} />
+            <p className="text-[12px] leading-relaxed" style={{ color: '#c6d3e3' }}>
+              <span style={{ color: '#c6d3e3', fontWeight: 700 }}>為何出現：</span>
+              酵素複製失誤、螢光訊號擷取誤差，或試劑合成瑕疵導致 index 鹼基讀錯。
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <ArrowRight size={13} className="mt-0.5 shrink-0" style={{ color: '#4cc38a' }} />
+            <p className="text-[12px] leading-relaxed" style={{ color: '#c6d3e3' }}>
+              <span style={{ color: '#c6d3e3', fontWeight: 700 }}>如何解決：</span>
+              只要樣本間 Index 鹼基差異足夠，就不會誤判，以避免浪費定序數據且能精準歸類。
+            </p>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };
