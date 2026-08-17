@@ -137,6 +137,13 @@ export const HomeView: React.FC = () => {
         <p id="start-hint" className="mt-2.5 text-[12px] min-h-[1.4em]" style={{ color: '#9fb0c3' }}>
           {selectedPatient ? `已選擇：${selectedPatient.code} (${selectedPatient.cancer})` : '請先選擇一位患者'}
         </p>
+        <button
+          onClick={() => setView('feedback')}
+          className="mt-4 inline-block text-[13px] font-bold transition-opacity hover:opacity-70"
+          style={{ color: '#4da3ff' }}
+        >
+          留下學習回饋 →
+        </button>
       </div>
     </section>
   );

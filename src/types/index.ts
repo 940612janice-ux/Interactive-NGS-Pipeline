@@ -50,7 +50,7 @@ export interface TaskSlide {
   description: string;
 }
 
-export type ViewType = 'home' | 'app';
+export type ViewType = 'home' | 'app' | 'feedback';
 
 export interface AppState {
   currentView: ViewType;

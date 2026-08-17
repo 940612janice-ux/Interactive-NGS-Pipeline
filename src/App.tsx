@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAppStore } from './context/AppContext';
 import { HomeView } from './components/Home';
 import { AppView } from './components/App';
+import { FeedbackView } from './components/Feedback/FeedbackView';
 import { TaskCard } from './components/TaskCard';
 import { CongratsPopup } from './components/TaskCard';
 
@@ -29,6 +30,7 @@ function App() {
       {/* Main Views */}
       {currentView === 'home' && <HomeView />}
       {currentView === 'app' && <AppView />}
+      {currentView === 'feedback' && <FeedbackView />}
 
       {/* Task Card Overlay */}
       <TaskCard />
