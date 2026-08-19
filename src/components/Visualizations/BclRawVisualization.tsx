@@ -36,7 +36,7 @@ export const BclRawVisualization: React.FC<BclRawVisualizationProps> = () => {
     const sequences: string[] = [];
     for (let i = 0; i < NUM_CLUSTERS; i++) sequences.push(generateRandomSequence(NUM_CYCLES));
 
-    // 每格 = cluster × cycle，四通道強度（主通道強、其他為雜訊）
+    // 每格 = read × cycle，四通道強度（主通道強、其他為雜訊）
     const matrix: IntensityMap[][] = sequences.map((seq) =>
       seq.split('').map((base) => {
         const vals: IntensityMap = { A: 0, C: 0, G: 0, T: 0 };
